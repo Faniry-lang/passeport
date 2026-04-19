@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface PasseportRepository extends JpaRepository<Passeport, Integer> {
     //Optional<Passeport> findByNumero(String numero);
-
     @Query("select p from Passeport p join fetch p.demandeur where p.numero = :numero")
     Optional<Passeport> findByNumeroAvecDemandeur(@Param("numero") String numero);
+    Optional<Passeport> findByNumero(String numero);
 }

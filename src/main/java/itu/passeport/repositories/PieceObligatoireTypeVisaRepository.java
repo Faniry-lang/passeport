@@ -8,4 +8,3 @@ import java.util.List;
 public interface PieceObligatoireTypeVisaRepository extends JpaRepository<PieceObligatoireTypeVisa, Integer> {
     List<PieceObligatoireTypeVisa> findByTypeVisaId(Integer typeVisaId);
 }
-

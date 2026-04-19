@@ -46,15 +46,10 @@ public class DemandeController {
     private final ReferenceChampTypeVisaRepository referenceChampTypeVisaRepository;
 
     @GetMapping("/nouvelle")
-    public String afficherFormulaireNouvelleDemande(Model model) {
-        if (!model.containsAttribute("demandeForm")) {
-            model.addAttribute("demandeForm", new DemandeForm());
-        }
-
+    public String afficherFormulaire(Model model) {
         model.addAttribute("typesVisa", typeVisaRepository.findAll());
         model.addAttribute("situationsFamiliales", situationFamilialeRepository.findAll());
         model.addAttribute("nationalites", nationaliteRepository.findAll());
-
         return "demandes/nouvelle";
     }
 
@@ -138,5 +133,6 @@ public class DemandeController {
         redirectAttributes.addFlashAttribute("errorMessage", message);
         redirectAttributes.addFlashAttribute("demandeForm", demandeForm);
         return "redirect:/demandes/nouvelle";
+        return "demande/nouvelle-demande";
     }
 }

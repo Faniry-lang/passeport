@@ -8,4 +8,3 @@ import java.util.List;
 public interface ReferenceChampTypeVisaRepository extends JpaRepository<ReferenceChampTypeVisa, Integer> {
     List<ReferenceChampTypeVisa> findByTypeVisaId(Integer typeVisaId);
 }
-
