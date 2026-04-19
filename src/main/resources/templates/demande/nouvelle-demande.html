@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/layout :: head('Nouvelle Demande')}">
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+
+            <nav th:replace="~{fragments/layout :: sidebar}"></nav>
+
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 mt-4">
+                <div
+                    class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Création d'une nouvelle demande</h1>
+                </div>
+
+                <!-- Zone de test de chargement -->
+                <div class="alert alert-info">
+                    <h4>Test de chargement DB:</h4>
+                    <ul>
+                        <li><span th:text="${typesVisa != null ? typesVisa.size() : 0}"></span> Types de visa chargés
+                        </li>
+                        <li><span th:text="${situationsFamiliales != null ? situationsFamiliales.size() : 0}"></span>
+                            Situations chargées</li>
+                        <li><span th:text="${nationalites != null ? nationalites.size() : 0}"></span> Nationalités
+                            chargées</li>
+                    </ul>
+                </div>
+
+                <!-- Formulaire (Etape 2 et 3) viendra ici plus tard -->
+
+            </main>
+        </div>
+    </div>
+</body>
+
+</html>
