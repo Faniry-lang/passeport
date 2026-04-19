@@ -3,7 +3,7 @@ package itu.passeport.services;
 import itu.passeport.constante.StatusConstante;
 import itu.passeport.constante.VisaConstante;
 import itu.passeport.dto.DemandeForm;
-//import itu.passeport.dto.PasseportRechercheDto;
+import itu.passeport.dto.PasseportRechercheDto;
 import itu.passeport.entities.*;
 import itu.passeport.exceptions.DonneesIncoherentesException;
 import itu.passeport.exceptions.PiecesObligatoiresManquantesException;
@@ -38,10 +38,10 @@ public class DemandeService {
     private final StatutDemandeRepository statutDemandeRepository;
     private final VisaRepository visaRepository;
 
-//    @Transactional(readOnly = true)
-//    public Optional<PasseportRechercheDto> rechercherPasseportParNumero(String numero) {
-//        return passeportRepository.findByNumeroAvecDemandeur(numero).map(this::toRechercheDto);
-//    }
+    @Transactional(readOnly = true)
+    public Optional<PasseportRechercheDto> rechercherPasseportParNumero(String numero) {
+        return passeportRepository.findByNumeroAvecDemandeur(numero).map(this::toRechercheDto);
+    }
 
     @Transactional
     public Demande creerDemande(DemandeForm form) {
@@ -67,25 +67,25 @@ public class DemandeService {
         return demande;
     }
 
-//    private PasseportRechercheDto toRechercheDto(Passeport passeport) {
-//        Demandeur demandeur = passeport.getDemandeur();
-//        return PasseportRechercheDto.builder()
-//                .passeportId(passeport.getId())
-//                .passeportNumero(passeport.getNumero())
-//                .passeportDateDelivrance(passeport.getDateDelivrance())
-//                .passeportDateExpiration(passeport.getDateExpiration())
-//                .demandeurId(demandeur.getId())
-//                .nom(demandeur.getNom())
-//                .prenom(demandeur.getPrenom())
-//                .nomJeuneFille(demandeur.getNomJeuneFille())
-//                .dtn(demandeur.getDtn())
-//                .situationFamilialeId(demandeur.getSituationFamiliale().getId())
-//                .nationaliteId(demandeur.getNationalite().getId())
-//                .adresse(demandeur.getAdresse())
-//                .email(demandeur.getEmail())
-//                .telephone(demandeur.getTelephone())
-//                .build();
-//    }
+    private PasseportRechercheDto toRechercheDto(Passeport passeport) {
+        Demandeur demandeur = passeport.getDemandeur();
+        return PasseportRechercheDto.builder()
+                .passeportId(passeport.getId())
+                .passeportNumero(passeport.getNumero())
+                .passeportDateDelivrance(passeport.getDateDelivrance())
+                .passeportDateExpiration(passeport.getDateExpiration())
+                .demandeurId(demandeur.getId())
+                .nom(demandeur.getNom())
+                .prenom(demandeur.getPrenom())
+                .nomJeuneFille(demandeur.getNomJeuneFille())
+                .dtn(demandeur.getDtn())
+                .situationFamilialeId(demandeur.getSituationFamiliale().getId())
+                .nationaliteId(demandeur.getNationalite().getId())
+                .adresse(demandeur.getAdresse())
+                .email(demandeur.getEmail())
+                .telephone(demandeur.getTelephone())
+                .build();
+    }
 
     private void validerTypeVisaSupporte(TypeVisa typeVisa) {
         if (!VisaConstante.estTypeSupporte(typeVisa.getCode())) {
@@ -317,4 +317,3 @@ public class DemandeService {
         return valeurFormulaire != null && !Objects.equals(valeurFormulaire, valeurBase);
     }
 }
-

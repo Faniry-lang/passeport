@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmation demande</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 24px; }
+        .card { border: 1px solid #ddd; border-radius: 8px; padding: 16px; max-width: 560px; }
+    </style>
+</head>
+<body>
+<h1>Demande enregistree</h1>
+<div class="card">
+    <p th:text="${successMessage != null ? successMessage : 'Votre demande a ete enregistree.'}"></p>
+    <p th:if="${demandeId != null}">Numero de demande: <strong th:text="${demandeId}"></strong></p>
+    <p><a th:href="@{/demandes/nouvelle}">Creer une autre demande</a></p>
+</div>
+</body>
+</html>
+
