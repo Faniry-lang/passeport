@@ -186,6 +186,132 @@
             </main>
         </div>
     </div>
+
+    <!-- SCRIPT AJAX POUR RECHERCHE DE PASSEPORT ET DYNAMISME DES TYPES DE VISA -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const btnSearch = document.getElementById("btnSearchPasseport");
+            const inputSearch = document.getElementById("searchPasseport");
+
+            // Champs Demandeur
+            const dNom = document.getElementById("demandeurNom");
+            const dPrenom = document.getElementById("demandeurPrenom");
+            const dNomJeuneFille = document.getElementById("demandeurNomJeuneFille");
+            const dDateNaissance = document.getElementById("demandeurDateNaissance");
+            const dSituation = document.getElementById("demandeurSituation");
+            const dNationalite = document.getElementById("demandeurNationalite");
+            const dAdresse = document.getElementById("demandeurAdresse");
+            const dEmail = document.getElementById("demandeurEmail");
+            const dTelephone = document.getElementById("demandeurTelephone");
+
+            // Champs Passeport
+            const pDateDelivrance = document.getElementById("passeportDateDelivrance");
+            const pDateExpiration = document.getElementById("passeportDateExpiration");
+
+            btnSearch.addEventListener("click", () => {
+                const numero = inputSearch.value.trim();
+                if (!numero) {
+                    alert("Veuillez saisir un numéro de passeport.");
+                    return;
+                }
+
+                // Affichage d'un indicateur de chargement sur le bouton
+                const originalText = btnSearch.innerText;
+                btnSearch.innerText = "Recherche...";
+                btnSearch.disabled = true;
+
+                fetch(`/api/passeports/${numero}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            if (response.status === 404) {
+                                throw new Error("Passeport non trouvé.");
+                            }
+                            throw new Error("Erreur serveur lors de la recherche.");
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        alert("Passeport trouvé ! Les champs ont été remplis.");
+
+                        // Remplissage infos Passeport
+                        pDateDelivrance.value = data.dateDelivrance || '';
+                        pDateExpiration.value = data.dateExpiration || '';
+
+                        // Remplissage infos Demandeur
+                        if (data.demandeur) {
+                            dNom.value = data.demandeur.nom || '';
+                            dPrenom.value = data.demandeur.prenom || '';
+                            dNomJeuneFille.value = data.demandeur.nomJeuneFille || '';
+                            dDateNaissance.value = data.demandeur.dateNaissance || '';
+                            dAdresse.value = data.demandeur.adresse || '';
+                            dEmail.value = data.demandeur.email || '';
+                            dTelephone.value = data.demandeur.telephone || '';
+
+                            if (data.demandeur.situationFamilialeId) {
+                                dSituation.value = data.demandeur.situationFamilialeId;
+                            }
+                            if (data.demandeur.nationaliteId) {
+                                dNationalite.value = data.demandeur.nationaliteId;
+                            }
+
+                            // On peut choisir ou non de bloquer les champs
+                            // dNom.readOnly = true; 
+                            // dprenom.readOnly = true;
+                        }
+                    })
+                    .catch(error => {
+                        alert(error.message + " Veuillez remplir manuellement le formulaire pour enregistrer un nouveau.");
+                        // Vider les champs si le passeport n'a pas été trouvé pour une saisie propre
+                        pDateDelivrance.value = '';
+                        pDateExpiration.value = '';
+                        dNom.value = '';
+                        dPrenom.value = '';
+                        dNomJeuneFille.value = '';
+                        dDateNaissance.value = '';
+                        dAdresse.value = '';
+                        dEmail.value = '';
+                        dTelephone.value = '';
+                        dSituation.value = '';
+                        dNationalite.value = '';
+                    })
+                    .finally(() => {
+                        btnSearch.innerText = originalText;
+                        btnSearch.disabled = false;
+                    });
+            });
+
+            // GESTION DU DYNAMISME DES TYPES DE VISA (Pièces jointes) 
+            const selectTypeVisa = document.getElementById("selectTypeVisa");
+            const dynamicContainer = document.getElementById("dynamicPiecesContainer");
+            const piecesHtml = document.getElementById("piecesCheckboxesList");
+            const fieldsHtml = document.getElementById("dynamicFieldsList");
+
+            selectTypeVisa.addEventListener("change", function () {
+                const visaId = this.value;
+                if (!visaId) {
+                    dynamicContainer.style.display = "none";
+                    return;
+                }
+
+                // TODO Sprint 1: Faire un autre fetch() vers /api/types-visa/{id}/dynamique
+                // pour afficher les checkboxes des pièces et les champs variables.
+                // Pour l'instant on montre le conteneur pour le design:
+                dynamicContainer.style.display = "block";
+                piecesHtml.innerHTML = `
+                    <div class="form-check text-primary">
+                        <input class="form-check-input" type="checkbox" name="pieces" value="1" id="piece1">
+                        <label class="form-check-label" for="piece1">Pièce simulée pour le visa ID ${visaId}</label>
+                    </div>
+                `;
+                fieldsHtml.innerHTML = `
+                    <div class="mb-2">
+                        <label class="form-label text-primary">Champ dynamique simulé pour visa ID ${visaId}</label>
+                        <input type="text" class="form-control" name="champs_dyn[1]">
+                    </div>
+                `;
+            });
+        });
+    </script>
 </body>
 
 </html>
