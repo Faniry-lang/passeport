@@ -3,8 +3,8 @@ package itu.passeport.constante;
 import java.util.Set;
 
 public final class VisaConstante {
-    public static final String TYPE_INVESTISSEUR = "INVESTISSEUR";
-    public static final String TYPE_TRAVAILLEUR = "TRAVAILLEUR";
+    public static final String TYPE_INVESTISSEUR = "INV";
+    public static final String TYPE_TRAVAILLEUR = "TRAV";
 
     private static final Set<String> TYPES_SUPPORTES = Set.of(TYPE_INVESTISSEUR, TYPE_TRAVAILLEUR);
 

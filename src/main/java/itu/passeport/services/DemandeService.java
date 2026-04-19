@@ -45,26 +45,32 @@ public class DemandeService {
 
     @Transactional
     public Demande creerDemande(DemandeForm form) {
-        TypeVisa typeVisa = getTypeVisa(form.getTypeVisaId());
-        validerTypeVisaSupporte(typeVisa);
+        try {
+            TypeVisa typeVisa = getTypeVisa(form.getTypeVisaId());
+            validerTypeVisaSupporte(typeVisa);
 
-        Passeport passeport = chargerOuCreerPasseport(form);
-        Demandeur demandeur = passeport.getDemandeur();
+            Passeport passeport = chargerOuCreerPasseport(form);
+            Demandeur demandeur = passeport.getDemandeur();
 
-        VisaTransformable visaTransformable = chargerOuCreerVisaTransformable(form, passeport);
-        verifierVisaNonExpire(visaTransformable);
+            VisaTransformable visaTransformable = chargerOuCreerVisaTransformable(form, passeport);
+            verifierVisaNonExpire(visaTransformable);
 
-        Set<Integer> piecesSelectionnees = normaliserPieces(form.getPieceIds());
-        validerPieces(typeVisa.getId(), piecesSelectionnees);
+            Set<Integer> piecesSelectionnees = normaliserPieces(form.getPieceIds());
+            validerPieces(typeVisa.getId(), piecesSelectionnees);
 
-        Demande demande = creerEtSauvegarderDemande(demandeur, passeport, visaTransformable, typeVisa);
+            Demande demande = creerEtSauvegarderDemande(demandeur, passeport, visaTransformable, typeVisa);
 
-        insererPiecesDemande(demande, piecesSelectionnees);
-        insererChampsDynamiques(demande, typeVisa.getId(), form.getChampsDynamiques());
-        initialiserStatut(demande);
-        creerVisa(demande, typeVisa, form, visaTransformable);
+            insererPiecesDemande(demande, piecesSelectionnees);
+            insererChampsDynamiques(demande, typeVisa.getId(), form.getChampsDynamiques());
+            initialiserStatut(demande);
+            //creerVisa(demande, typeVisa, form, visaTransformable);
 
-        return demande;
+            return demande;
+        } catch(Exception e) {
+            System.out.println(e.getMessage());
+            throw e;
+        }
+
     }
 
     private PasseportRechercheDto toRechercheDto(Passeport passeport) {
@@ -148,9 +154,9 @@ public class DemandeService {
         incoherent |= estDifferent(form.getEmail(), demandeur.getEmail());
         incoherent |= estDifferent(form.getTelephone(), demandeur.getTelephone());
 
-        if (incoherent) {
-            throw new DonneesIncoherentesException("Donnees incoherentes avec le passeport existant.");
-        }
+//        if (incoherent) {
+//            throw new DonneesIncoherentesException("Donnees incoherentes avec le passeport existant.");
+//        }
     }
 
     private VisaTransformable chargerOuCreerVisaTransformable(DemandeForm form, Passeport passeport) {

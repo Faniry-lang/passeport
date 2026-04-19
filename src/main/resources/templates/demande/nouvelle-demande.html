@@ -16,23 +16,10 @@
                     <h1 class="h2">Création d'une nouvelle demande</h1>
                 </div>
 
-                <!-- Zone de test de chargement -->
-                <div class="alert alert-info">
-                    <h4>Test de chargement DB:</h4>
-                    <ul>
-                        <li><span th:text="${typesVisa != null ? typesVisa.size() : 0}"></span> Types de visa chargés
-                        </li>
-                        <li><span th:text="${situationsFamiliales != null ? situationsFamiliales.size() : 0}"></span>
-                            Situations chargées</li>
-                        <li><span th:text="${nationalites != null ? nationalites.size() : 0}"></span> Nationalités
-                            chargées</li>
-                    </ul>
-                </div>
-
                 <!-- Formulaire (Etape 2 et 3) viendra ici plus tard -->
                 <div class="card mb-4 shadow-sm mt-4">
                     <div class="card-body">
-                        <form id="demandeForm" method="post" th:action="@{/demandes/nouvelle}">
+                        <form id="demandeForm" method="post" th:action="@{/demandes}">
 
                             <!-- RECHERCHE PASSEPORT -->
                             <h4 class="mb-3 text-primary border-bottom pb-2">Recherche de Passeport Existant</h4>
@@ -40,7 +27,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label">Numéro de passeport</label>
                                     <div class="input-group">
-                                        <input type="text" class="form-control" name="passeport.numero"
+                                        <input type="text" class="form-control" name="passeportNumero"
                                             id="searchPasseport" placeholder="Tapez un numéro de passeport existant...">
                                         <button class="btn btn-outline-secondary" type="button"
                                             id="btnSearchPasseport">Rechercher</button>
@@ -54,27 +41,27 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-md-6">
                                     <label class="form-label">Nom</label>
-                                    <input type="text" class="form-control" name="demandeur.nom" id="demandeurNom"
+                                    <input type="text" class="form-control" name="nom" id="demandeurNom"
                                         required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Prénom</label>
-                                    <input type="text" class="form-control" name="demandeur.prenom"
+                                    <input type="text" class="form-control" name="prenom"
                                         id="demandeurPrenom">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Nom de jeune fille</label>
-                                    <input type="text" class="form-control" name="demandeur.nomJeuneFille"
+                                    <input type="text" class="form-control" name="nomJeuneFille"
                                         id="demandeurNomJeuneFille">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Date de naissance</label>
-                                    <input type="date" class="form-control" name="demandeur.dateNaissance"
+                                    <input type="date" class="form-control" name="dtn"
                                         id="demandeurDateNaissance" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Situation familiale</label>
-                                    <select class="form-select" name="demandeur.situationFamiliale.id"
+                                    <select class="form-select" name="situationFamilialeId"
                                         id="demandeurSituation" required>
                                         <option value="">-- Choisir --</option>
                                         <option th:each="sit : ${situationsFamiliales}" th:value="${sit.id}"
@@ -83,7 +70,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Nationalité</label>
-                                    <select class="form-select" name="demandeur.nationalite.id"
+                                    <select class="form-select" name="nationaliteId"
                                         id="demandeurNationalite" required>
                                         <option value="">-- Choisir --</option>
                                         <option th:each="nat : ${nationalites}" th:value="${nat.id}"
@@ -92,17 +79,17 @@
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label">Adresse</label>
-                                    <textarea class="form-control" name="demandeur.adresse" id="demandeurAdresse"
+                                    <textarea class="form-control" name="adresse" id="demandeurAdresse"
                                         rows="2" required></textarea>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Email</label>
-                                    <input type="email" class="form-control" name="demandeur.email" id="demandeurEmail"
+                                    <input type="email" class="form-control" name="email" id="demandeurEmail"
                                         required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Téléphone</label>
-                                    <input type="tel" class="form-control" name="demandeur.telephone"
+                                    <input type="tel" class="form-control" name="telephone"
                                         id="demandeurTelephone" required>
                                 </div>
                             </div>
@@ -112,12 +99,12 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-md-6">
                                     <label class="form-label">Date de délivrance</label>
-                                    <input type="date" class="form-control" name="passeport.dateDelivrance"
+                                    <input type="date" class="form-control" name="passeportDateDelivrance"
                                         id="passeportDateDelivrance" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Date d'expiration</label>
-                                    <input type="date" class="form-control" name="passeport.dateExpiration"
+                                    <input type="date" class="form-control" name="passeportDateExpiration"
                                         id="passeportDateExpiration" required>
                                 </div>
                             </div>
@@ -127,15 +114,15 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-md-4">
                                     <label class="form-label">Référence du Visa</label>
-                                    <input type="text" class="form-control" name="visaTransformable.reference">
+                                    <input type="text" class="form-control" name="visaReference">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Date de délivrance</label>
-                                    <input type="date" class="form-control" name="visaTransformable.dateDelivrance">
+                                    <input type="date" class="form-control" name="visaDateDelivrance">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">Date d'expiration</label>
-                                    <input type="date" class="form-control" name="visaTransformable.dateExpiration">
+                                    <input type="date" class="form-control" name="visaDateExpiration">
                                 </div>
                             </div>
 
@@ -144,7 +131,7 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-md-12">
                                     <label class="form-label">Type de visa demandé</label>
-                                    <select class="form-select" name="typeVisa.id" id="selectTypeVisa" required>
+                                    <select class="form-select" name="typeVisaId" id="selectTypeVisa" required>
                                         <option value="">-- Choisir le type de visa --</option>
                                         <option th:each="tv : ${typesVisa}" th:value="${tv.id}"
                                             th:text="|${tv.code} - ${tv.nom}|"></option>
@@ -152,11 +139,11 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Date prévue d'entrée</label>
-                                    <input type="date" class="form-control" name="demande.dateEntree" required>
+                                    <input type="date" class="form-control" name="dateEntree" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Lieu d'entrée</label>
-                                    <input type="text" class="form-control" name="demande.lieuEntree" required>
+                                    <input type="text" class="form-control" name="lieuEntree" required>
                                 </div>
                             </div>
 
@@ -234,24 +221,25 @@
                         alert("Passeport trouvé ! Les champs ont été remplis.");
 
                         // Remplissage infos Passeport
-                        pDateDelivrance.value = data.dateDelivrance || '';
-                        pDateExpiration.value = data.dateExpiration || '';
+                        pDateDelivrance.value = data.passeportDateDelivrance || data.dateDelivrance || '';
+                        pDateExpiration.value = data.passeportDateExpiration || data.dateExpiration || '';
 
                         // Remplissage infos Demandeur
                         if (data.demandeur) {
-                            dNom.value = data.demandeur.nom || '';
-                            dPrenom.value = data.demandeur.prenom || '';
-                            dNomJeuneFille.value = data.demandeur.nomJeuneFille || '';
-                            dDateNaissance.value = data.demandeur.dateNaissance || '';
-                            dAdresse.value = data.demandeur.adresse || '';
-                            dEmail.value = data.demandeur.email || '';
-                            dTelephone.value = data.demandeur.telephone || '';
+                            // Le DTO de recherche peut exposer directement les champs (conforme à PasseportRechercheDto)
+                            dNom.value = data.nom || data.demandeur?.nom || '';
+                            dPrenom.value = data.prenom || data.demandeur?.prenom || '';
+                            dNomJeuneFille.value = data.nomJeuneFille || data.demandeur?.nomJeuneFille || '';
+                            dDateNaissance.value = data.dtn || data.demandeur?.dateNaissance || '';
+                            dAdresse.value = data.adresse || data.demandeur?.adresse || '';
+                            dEmail.value = data.email || data.demandeur?.email || '';
+                            dTelephone.value = data.telephone || data.demandeur?.telephone || '';
 
-                            if (data.demandeur.situationFamilialeId) {
-                                dSituation.value = data.demandeur.situationFamilialeId;
+                            if (data.situationFamilialeId) {
+                                dSituation.value = data.situationFamilialeId;
                             }
-                            if (data.demandeur.nationaliteId) {
-                                dNationalite.value = data.demandeur.nationaliteId;
+                            if (data.nationaliteId) {
+                                dNationalite.value = data.nationaliteId;
                             }
 
                             // On peut choisir ou non de bloquer les champs
@@ -308,9 +296,10 @@
                             data.pieces.forEach(p => {
                                 const requiredAttr = p.obligatoire ? "required" : "";
                                 const requiredLabel = p.obligatoire ? "<span class='text-danger'>*</span>" : "(optionnel)";
+                                // name must match DemandeForm.pieceIds
                                 piecesMarkup += `
                                     <div class="form-check text-primary">
-                                        <input class="form-check-input" type="checkbox" name="piecesIds" value="${p.id}" id="piece_${p.id}" ${requiredAttr}>
+                                        <input class="form-check-input" type="checkbox" name="pieceIds" value="${p.id}" id="piece_${p.id}" ${requiredAttr}>
                                         <label class="form-check-label" for="piece_${p.id}">
                                             ${p.nom} ${requiredLabel}
                                         </label>
@@ -331,6 +320,7 @@
                                 if (c.typeChamp && c.typeChamp.toLowerCase() === "date") inputType = "date";
                                 else if (c.typeChamp && c.typeChamp.toLowerCase() === "number") inputType = "number";
 
+                                // name must match DemandeForm.champsDynamiques[<id>]
                                 fieldsMarkup += `
                                     <div class="mb-2">
                                         <label class="form-label text-primary">${c.nom}</label>
@@ -354,3 +344,4 @@
 </body>
 
 </html>
+

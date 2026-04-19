@@ -50,7 +50,8 @@ public class DemandeController {
         model.addAttribute("typesVisa", typeVisaRepository.findAll());
         model.addAttribute("situationsFamiliales", situationFamilialeRepository.findAll());
         model.addAttribute("nationalites", nationaliteRepository.findAll());
-        return "demandes/nouvelle";
+        model.addAttribute("demandeForm", new DemandeForm());
+        return "demande/nouvelle-demande";
     }
 
     @GetMapping("/confirmation")
@@ -111,7 +112,10 @@ public class DemandeController {
             RedirectAttributes redirectAttributes
     ) {
         try {
+            System.out.println("=====DEBUG=====");
             Demande demande = demandeService.creerDemande(demandeForm);
+            System.out.println("DEMANDE ID: "+demande.getId());
+            System.out.println("===FIN DEBUG===");
             redirectAttributes.addFlashAttribute("successMessage", "Demande creee avec succes.");
             redirectAttributes.addFlashAttribute("demandeId", demande.getId());
             return "redirect:/demandes/confirmation";
@@ -133,6 +137,5 @@ public class DemandeController {
         redirectAttributes.addFlashAttribute("errorMessage", message);
         redirectAttributes.addFlashAttribute("demandeForm", demandeForm);
         return "redirect:/demandes/nouvelle";
-        return "demande/nouvelle-demande";
     }
 }
