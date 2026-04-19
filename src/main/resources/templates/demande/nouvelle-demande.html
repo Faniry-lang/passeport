@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/layout :: head('Nouvelle Demande')}">
+</head>
+
+<body>
+    <div class="container-fluid">
+        <div class="row">
+
+            <nav th:replace="~{fragments/layout :: sidebar}"></nav>
+
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 mt-4">
+                <div
+                    class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                    <h1 class="h2">Création d'une nouvelle demande</h1>
+                </div>
+
+                <!-- Zone de test de chargement -->
+                <div class="alert alert-info">
+                    <h4>Test de chargement DB:</h4>
+                    <ul>
+                        <li><span th:text="${typesVisa != null ? typesVisa.size() : 0}"></span> Types de visa chargés
+                        </li>
+                        <li><span th:text="${situationsFamiliales != null ? situationsFamiliales.size() : 0}"></span>
+                            Situations chargées</li>
+                        <li><span th:text="${nationalites != null ? nationalites.size() : 0}"></span> Nationalités
+                            chargées</li>
+                    </ul>
+                </div>
+
+                <!-- Formulaire (Etape 2 et 3) viendra ici plus tard -->
+                <div class="card mb-4 shadow-sm mt-4">
+                    <div class="card-body">
+                        <form id="demandeForm" method="post" th:action="@{/demandes/nouvelle}">
+
+                            <!-- RECHERCHE PASSEPORT -->
+                            <h4 class="mb-3 text-primary border-bottom pb-2">Recherche de Passeport Existant</h4>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Numéro de passeport</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" name="passeport.numero"
+                                            id="searchPasseport" placeholder="Tapez un numéro de passeport existant...">
+                                        <button class="btn btn-outline-secondary" type="button"
+                                            id="btnSearchPasseport">Rechercher</button>
+                                    </div>
+                                    <small class="text-muted">La recherche (AJAX) viendra à l'étape 3.</small>
+                                </div>
+                            </div>
+
+                            <!-- INFORMATIONS DEMANDEUR -->
+                            <h4 class="mb-3 text-primary border-bottom pb-2 mt-5">Informations du Demandeur</h4>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Nom</label>
+                                    <input type="text" class="form-control" name="demandeur.nom" id="demandeurNom"
+                                        required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Prénom</label>
+                                    <input type="text" class="form-control" name="demandeur.prenom"
+                                        id="demandeurPrenom">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Nom de jeune fille</label>
+                                    <input type="text" class="form-control" name="demandeur.nomJeuneFille"
+                                        id="demandeurNomJeuneFille">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Date de naissance</label>
+                                    <input type="date" class="form-control" name="demandeur.dateNaissance"
+                                        id="demandeurDateNaissance" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Situation familiale</label>
+                                    <select class="form-select" name="demandeur.situationFamiliale.id"
+                                        id="demandeurSituation" required>
+                                        <option value="">-- Choisir --</option>
+                                        <option th:each="sit : ${situationsFamiliales}" th:value="${sit.id}"
+                                            th:text="${sit.nom}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Nationalité</label>
+                                    <select class="form-select" name="demandeur.nationalite.id"
+                                        id="demandeurNationalite" required>
+                                        <option value="">-- Choisir --</option>
+                                        <option th:each="nat : ${nationalites}" th:value="${nat.id}"
+                                            th:text="${nat.nom}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Adresse</label>
+                                    <textarea class="form-control" name="demandeur.adresse" id="demandeurAdresse"
+                                        rows="2" required></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" name="demandeur.email" id="demandeurEmail"
+                                        required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Téléphone</label>
+                                    <input type="tel" class="form-control" name="demandeur.telephone"
+                                        id="demandeurTelephone" required>
+                                </div>
+                            </div>
+
+                            <!-- VALIDITÉ DU PASSEPORT -->
+                            <h4 class="mb-3 text-primary border-bottom pb-2 mt-5">Validité du Passeport</h4>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Date de délivrance</label>
+                                    <input type="date" class="form-control" name="passeport.dateDelivrance"
+                                        id="passeportDateDelivrance" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Date d'expiration</label>
+                                    <input type="date" class="form-control" name="passeport.dateExpiration"
+                                        id="passeportDateExpiration" required>
+                                </div>
+                            </div>
+
+                            <!-- VISA TRANSFORMABLE -->
+                            <h4 class="mb-3 text-primary border-bottom pb-2 mt-5">Visa Transformable (Optionnel)</h4>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-4">
+                                    <label class="form-label">Référence du Visa</label>
+                                    <input type="text" class="form-control" name="visaTransformable.reference">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Date de délivrance</label>
+                                    <input type="date" class="form-control" name="visaTransformable.dateDelivrance">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Date d'expiration</label>
+                                    <input type="date" class="form-control" name="visaTransformable.dateExpiration">
+                                </div>
+                            </div>
+
+                            <!-- INFORMATIONS DE LA DEMANDE -->
+                            <h4 class="mb-3 text-primary border-bottom pb-2 mt-5">Informations de la Demande</h4>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-12">
+                                    <label class="form-label">Type de visa demandé</label>
+                                    <select class="form-select" name="typeVisa.id" id="selectTypeVisa" required>
+                                        <option value="">-- Choisir le type de visa --</option>
+                                        <option th:each="tv : ${typesVisa}" th:value="${tv.id}"
+                                            th:text="|${tv.code} - ${tv.nom}|"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Date prévue d'entrée</label>
+                                    <input type="date" class="form-control" name="demande.dateEntree" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Lieu d'entrée</label>
+                                    <input type="text" class="form-control" name="demande.lieuEntree" required>
+                                </div>
+                            </div>
+
+                            <!-- PIECES JUSTIFICATIVES (DYNAMIQUES) -->
+                            <div id="dynamicPiecesContainer" class="mt-4" style="display: none;">
+                                <h4 class="mb-3 text-secondary border-bottom pb-2">Pièces Justificatives (à cocher par
+                                    le demandeur)</h4>
+                                <div id="piecesCheckboxesList" class="ps-3 border-start border-2 border-secondary mb-3">
+                                    <span class="text-muted fst-italic">Veuillez sélectionner un type de visa
+                                        d'abord...</span>
+                                </div>
+
+                                <h4 class="mb-3 text-secondary border-bottom pb-2">Champs Dynamiques requis</h4>
+                                <div id="dynamicFieldsList" class="ps-3 border-start border-2 border-secondary">
+                                    <span class="text-muted fst-italic">Veuillez sélectionner un type de visa
+                                        d'abord...</span>
+                                </div>
+                            </div>
+
+                            <hr class="my-5">
+                            <button type="submit" class="btn btn-primary btn-lg px-4 mb-4">Soumettre la Demande</button>
+
+                        </form>
+                    </div>
+                </div>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- SCRIPT AJAX POUR RECHERCHE DE PASSEPORT ET DYNAMISME DES TYPES DE VISA -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const btnSearch = document.getElementById("btnSearchPasseport");
+            const inputSearch = document.getElementById("searchPasseport");
+
+            // Champs Demandeur
+            const dNom = document.getElementById("demandeurNom");
+            const dPrenom = document.getElementById("demandeurPrenom");
+            const dNomJeuneFille = document.getElementById("demandeurNomJeuneFille");
+            const dDateNaissance = document.getElementById("demandeurDateNaissance");
+            const dSituation = document.getElementById("demandeurSituation");
+            const dNationalite = document.getElementById("demandeurNationalite");
+            const dAdresse = document.getElementById("demandeurAdresse");
+            const dEmail = document.getElementById("demandeurEmail");
+            const dTelephone = document.getElementById("demandeurTelephone");
+
+            // Champs Passeport
+            const pDateDelivrance = document.getElementById("passeportDateDelivrance");
+            const pDateExpiration = document.getElementById("passeportDateExpiration");
+
+            btnSearch.addEventListener("click", () => {
+                const numero = inputSearch.value.trim();
+                if (!numero) {
+                    alert("Veuillez saisir un numéro de passeport.");
+                    return;
+                }
+
+                // Affichage d'un indicateur de chargement sur le bouton
+                const originalText = btnSearch.innerText;
+                btnSearch.innerText = "Recherche...";
+                btnSearch.disabled = true;
+
+                fetch(`/api/passeports/${numero}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            if (response.status === 404) {
+                                throw new Error("Passeport non trouvé.");
+                            }
+                            throw new Error("Erreur serveur lors de la recherche.");
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        alert("Passeport trouvé ! Les champs ont été remplis.");
+
+                        // Remplissage infos Passeport
+                        pDateDelivrance.value = data.dateDelivrance || '';
+                        pDateExpiration.value = data.dateExpiration || '';
+
+                        // Remplissage infos Demandeur
+                        if (data.demandeur) {
+                            dNom.value = data.demandeur.nom || '';
+                            dPrenom.value = data.demandeur.prenom || '';
+                            dNomJeuneFille.value = data.demandeur.nomJeuneFille || '';
+                            dDateNaissance.value = data.demandeur.dateNaissance || '';
+                            dAdresse.value = data.demandeur.adresse || '';
+                            dEmail.value = data.demandeur.email || '';
+                            dTelephone.value = data.demandeur.telephone || '';
+
+                            if (data.demandeur.situationFamilialeId) {
+                                dSituation.value = data.demandeur.situationFamilialeId;
+                            }
+                            if (data.demandeur.nationaliteId) {
+                                dNationalite.value = data.demandeur.nationaliteId;
+                            }
+
+                            // On peut choisir ou non de bloquer les champs
+                            // dNom.readOnly = true; 
+                            // dprenom.readOnly = true;
+                        }
+                    })
+                    .catch(error => {
+                        alert(error.message + " Veuillez remplir manuellement le formulaire pour enregistrer un nouveau.");
+                        // Vider les champs si le passeport n'a pas été trouvé pour une saisie propre
+                        pDateDelivrance.value = '';
+                        pDateExpiration.value = '';
+                        dNom.value = '';
+                        dPrenom.value = '';
+                        dNomJeuneFille.value = '';
+                        dDateNaissance.value = '';
+                        dAdresse.value = '';
+                        dEmail.value = '';
+                        dTelephone.value = '';
+                        dSituation.value = '';
+                        dNationalite.value = '';
+                    })
+                    .finally(() => {
+                        btnSearch.innerText = originalText;
+                        btnSearch.disabled = false;
+                    });
+            });
+
+            // GESTION DU DYNAMISME DES TYPES DE VISA (Pièces jointes) 
+            const selectTypeVisa = document.getElementById("selectTypeVisa");
+            const dynamicContainer = document.getElementById("dynamicPiecesContainer");
+            const piecesHtml = document.getElementById("piecesCheckboxesList");
+            const fieldsHtml = document.getElementById("dynamicFieldsList");
+
+            selectTypeVisa.addEventListener("change", function () {
+                const visaId = this.value;
+                if (!visaId) {
+                    dynamicContainer.style.display = "none";
+                    return;
+                }
+
+                // TODO Sprint 1: Faire un autre fetch() vers /api/types-visa/{id}/dynamique
+                // pour afficher les checkboxes des pièces et les champs variables.
+                // Pour l'instant on montre le conteneur pour le design:
+                dynamicContainer.style.display = "block";
+                piecesHtml.innerHTML = `
+                    <div class="form-check text-primary">
+                        <input class="form-check-input" type="checkbox" name="pieces" value="1" id="piece1">
+                        <label class="form-check-label" for="piece1">Pièce simulée pour le visa ID ${visaId}</label>
+                    </div>
+                `;
+                fieldsHtml.innerHTML = `
+                    <div class="mb-2">
+                        <label class="form-label text-primary">Champ dynamique simulé pour visa ID ${visaId}</label>
+                        <input type="text" class="form-control" name="champs_dyn[1]">
+                    </div>
+                `;
+            });
+        });
+    </script>
+</body>
+
+</html>
