@@ -293,22 +293,61 @@
                     return;
                 }
 
-                // TODO Sprint 1: Faire un autre fetch() vers /api/types-visa/{id}/dynamique
-                // pour afficher les checkboxes des pièces et les champs variables.
-                // Pour l'instant on montre le conteneur pour le design:
-                dynamicContainer.style.display = "block";
-                piecesHtml.innerHTML = `
-                    <div class="form-check text-primary">
-                        <input class="form-check-input" type="checkbox" name="pieces" value="1" id="piece1">
-                        <label class="form-check-label" for="piece1">Pièce simulée pour le visa ID ${visaId}</label>
-                    </div>
-                `;
-                fieldsHtml.innerHTML = `
-                    <div class="mb-2">
-                        <label class="form-label text-primary">Champ dynamique simulé pour visa ID ${visaId}</label>
-                        <input type="text" class="form-control" name="champs_dyn[1]">
-                    </div>
-                `;
+                // Appel API pour récupérer les pièces et champs pour ce type de visa
+                fetch(`/api/types-visa/${visaId}/dynamique`)
+                    .then(response => {
+                        if (!response.ok) throw new Error("Erreur de récupération des données dynamiques.");
+                        return response.json();
+                    })
+                    .then(data => {
+                        dynamicContainer.style.display = "block";
+
+                        // Générer le HTML des pièces
+                        if (data.pieces && data.pieces.length > 0) {
+                            let piecesMarkup = "";
+                            data.pieces.forEach(p => {
+                                const requiredAttr = p.obligatoire ? "required" : "";
+                                const requiredLabel = p.obligatoire ? "<span class='text-danger'>*</span>" : "(optionnel)";
+                                piecesMarkup += `
+                                    <div class="form-check text-primary">
+                                        <input class="form-check-input" type="checkbox" name="piecesIds" value="${p.id}" id="piece_${p.id}" ${requiredAttr}>
+                                        <label class="form-check-label" for="piece_${p.id}">
+                                            ${p.nom} ${requiredLabel}
+                                        </label>
+                                    </div>
+                                `;
+                            });
+                            piecesHtml.innerHTML = piecesMarkup;
+                        } else {
+                            piecesHtml.innerHTML = `<span class="text-muted fst-italic">Aucune pièce requise.</span>`;
+                        }
+
+                        // Générer le HTML des champs
+                        if (data.champs && data.champs.length > 0) {
+                            let fieldsMarkup = "";
+                            data.champs.forEach(c => {
+                                // Mappage du type de champ depuis DB vers form HTML (ex: date, text, number, etc.)
+                                let inputType = "text";
+                                if (c.typeChamp && c.typeChamp.toLowerCase() === "date") inputType = "date";
+                                else if (c.typeChamp && c.typeChamp.toLowerCase() === "number") inputType = "number";
+
+                                fieldsMarkup += `
+                                    <div class="mb-2">
+                                        <label class="form-label text-primary">${c.nom}</label>
+                                        <input type="${inputType}" class="form-control" name="champsDynamiques[${c.id}]" required>
+                                    </div>
+                                `;
+                            });
+                            fieldsHtml.innerHTML = fieldsMarkup;
+                        } else {
+                            fieldsHtml.innerHTML = `<span class="text-muted fst-italic">Aucun champ dynamique requis.</span>`;
+                        }
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        dynamicContainer.style.display = "none";
+                        alert("Impossible de charger les pièces justificatives et champs requis pour ce visa.");
+                    });
             });
         });
     </script>
