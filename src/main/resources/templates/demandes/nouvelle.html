@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nouvelle demande</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 24px; }
+        h1, h2 { margin-bottom: 8px; }
+        .grid { display: grid; grid-template-columns: repeat(2, minmax(280px, 1fr)); gap: 12px; }
+        .field { display: flex; flex-direction: column; gap: 4px; }
+        .section { margin-top: 24px; padding-top: 8px; border-top: 1px solid #ddd; }
+        .message { padding: 10px; border-radius: 6px; margin-bottom: 12px; }
+        .error { background: #ffeaea; color: #9b1c1c; }
+        .success { background: #e9f8ee; color: #1c6b31; }
+        .actions { margin-top: 20px; display: flex; gap: 8px; }
+        .inline { display: flex; gap: 8px; align-items: end; }
+        .muted { color: #666; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+<h1>Nouvelle demande</h1>
+
+<div th:if="${errorMessage}" class="message error" th:text="${errorMessage}"></div>
+<div th:if="${successMessage}" class="message success" th:text="${successMessage}"></div>
+
+<form th:action="@{/demandes}" method="post" th:object="${demandeForm}">
+    <div class="section">
+        <h2>Recherche passeport</h2>
+        <div class="inline">
+            <div class="field">
+                <label for="rechercheNumero">Numero passeport</label>
+                <input id="rechercheNumero" type="text" placeholder="Ex: P123456">
+            </div>
+            <button id="btnRecherchePasseport" type="button">Rechercher</button>
+        </div>
+        <p id="messageRecherche" class="muted"></p>
+    </div>
+
+    <div class="section">
+        <h2>Demandeur</h2>
+        <div class="grid">
+            <div class="field"><label for="nom">Nom</label><input id="nom" th:field="*{nom}" type="text" required></div>
+            <div class="field"><label for="prenom">Prenom</label><input id="prenom" th:field="*{prenom}" type="text"></div>
+            <div class="field"><label for="nomJeuneFille">Nom de jeune fille</label><input id="nomJeuneFille" th:field="*{nomJeuneFille}" type="text"></div>
+            <div class="field"><label for="dtn">Date de naissance</label><input id="dtn" th:field="*{dtn}" type="date" required></div>
+            <div class="field">
+                <label for="situationFamilialeId">Situation familiale</label>
+                <select id="situationFamilialeId" th:field="*{situationFamilialeId}" required>
+                    <option value="">-- Choisir --</option>
+                    <option th:each="s : ${situationsFamiliales}" th:value="${s.id}" th:text="${s.nom}"></option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="nationaliteId">Nationalite</label>
+                <select id="nationaliteId" th:field="*{nationaliteId}" required>
+                    <option value="">-- Choisir --</option>
+                    <option th:each="n : ${nationalites}" th:value="${n.id}" th:text="${n.nom}"></option>
+                </select>
+            </div>
+            <div class="field"><label for="adresse">Adresse</label><input id="adresse" th:field="*{adresse}" type="text"></div>
+            <div class="field"><label for="email">Email</label><input id="email" th:field="*{email}" type="email"></div>
+            <div class="field"><label for="telephone">Telephone</label><input id="telephone" th:field="*{telephone}" type="text"></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Passeport</h2>
+        <div class="grid">
+            <div class="field"><label for="passeportNumero">Numero</label><input id="passeportNumero" th:field="*{passeportNumero}" type="text" required></div>
+            <div class="field"><label for="passeportDateDelivrance">Date delivrance</label><input id="passeportDateDelivrance" th:field="*{passeportDateDelivrance}" type="date" required></div>
+            <div class="field"><label for="passeportDateExpiration">Date expiration</label><input id="passeportDateExpiration" th:field="*{passeportDateExpiration}" type="date" required></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Visa transformable</h2>
+        <div class="grid">
+            <div class="field"><label for="visaReference">Reference</label><input id="visaReference" th:field="*{visaReference}" type="text" required></div>
+            <div class="field"><label for="visaDateDelivrance">Date delivrance</label><input id="visaDateDelivrance" th:field="*{visaDateDelivrance}" type="date"></div>
+            <div class="field"><label for="visaDateExpiration">Date expiration</label><input id="visaDateExpiration" th:field="*{visaDateExpiration}" type="date" required></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Demande</h2>
+        <div class="grid">
+            <div class="field">
+                <label for="typeVisaSelect">Type de visa</label>
+                <select id="typeVisaSelect" th:field="*{typeVisaId}" required>
+                    <option value="">-- Choisir --</option>
+                    <option th:each="tv : ${typesVisa}" th:value="${tv.id}" th:text="${tv.nom + ' (' + tv.code + ')'}"></option>
+                </select>
+            </div>
+            <div class="field"><label for="dateEntree">Date d'entree</label><input id="dateEntree" th:field="*{dateEntree}" type="date" required></div>
+            <div class="field"><label for="lieuEntree">Lieu d'entree</label><input id="lieuEntree" th:field="*{lieuEntree}" type="text"></div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Pieces justificatives</h2>
+        <div id="piecesContainer" class="grid"></div>
+    </div>
+
+    <div class="section">
+        <h2>Champs dynamiques</h2>
+        <div id="champsDynamiquesContainer" class="grid"></div>
+    </div>
+
+    <div class="actions">
+        <button type="submit">Soumettre la demande</button>
+    </div>
+</form>
+
+<script th:inline="javascript">
+    window.initialDemandeForm = {
+        pieceIds: /*[[${demandeForm.pieceIds}]]*/ [],
+        champsDynamiques: /*[[${demandeForm.champsDynamiques}]]*/ {}
+    };
+</script>
+<script th:src="@{/js/demandes/nouvelle.js}"></script>
+</body>
+</html>
+
+
