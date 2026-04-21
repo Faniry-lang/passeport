@@ -149,14 +149,17 @@
 
                             <!-- PIECES JUSTIFICATIVES (DYNAMIQUES) -->
                             <div id="dynamicPiecesContainer" class="mt-4" style="display: none;">
-                                <h4 class="mb-3 text-secondary border-bottom pb-2">Pièces Justificatives (à cocher par
-                                    le demandeur)</h4>
+                                <h4 class="mb-3 text-secondary border-bottom pb-2">Pièces justificatives</h4>
+                                <p class="text-muted small">Sélectionnez les pièces que le demandeur fournit. Les pièces marquées
+                                    <span class="text-danger">(Obligatoire)</span> doivent être fournies.</p>
+
                                 <div id="piecesCheckboxesList" class="ps-3 border-start border-2 border-secondary mb-3">
                                     <span class="text-muted fst-italic">Veuillez sélectionner un type de visa
                                         d'abord...</span>
                                 </div>
 
-                                <h4 class="mb-3 text-secondary border-bottom pb-2">Champs Dynamiques requis</h4>
+                                <h4 class="mb-3 text-secondary border-bottom pb-2">Informations complémentaires</h4>
+                                <p class="text-muted small">Saisissez les informations demandées selon le type de visa.</p>
                                 <div id="dynamicFieldsList" class="ps-3 border-start border-2 border-secondary">
                                     <span class="text-muted fst-italic">Veuillez sélectionner un type de visa
                                         d'abord...</span>
@@ -173,6 +176,28 @@
             </main>
         </div>
     </div>
+
+    <!-- Modal pour messages flash (erreur / succès) -->
+    <div class="modal fade" id="flashModal" tabindex="-1" aria-labelledby="flashModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="flashModalLabel">Message</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="flashModalBody"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conteneur permettant de transmettre les flash attributes au JS -->
+    <div id="flashData" th:attr="data-success=${successMessage},data-error=${errorMessage}" style="display:none"></div>
+
+    <!-- Inclure Bootstrap JS bundle pour Modal (CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- SCRIPT AJAX POUR RECHERCHE DE PASSEPORT ET DYNAMISME DES TYPES DE VISA -->
     <script>
@@ -198,7 +223,7 @@
             btnSearch.addEventListener("click", () => {
                 const numero = inputSearch.value.trim();
                 if (!numero) {
-                    alert("Veuillez saisir un numéro de passeport.");
+                    showModal('Recherche passeport', 'Veuillez saisir un numéro de passeport.');
                     return;
                 }
 
@@ -207,7 +232,7 @@
                 btnSearch.innerText = "Recherche...";
                 btnSearch.disabled = true;
 
-                fetch(`/api/passeports/${numero}`)
+                fetch(`/demandes/recherche-passeport?numero=${encodeURIComponent(numero)}`)
                     .then(response => {
                         if (!response.ok) {
                             if (response.status === 404) {
@@ -218,37 +243,30 @@
                         return response.json();
                     })
                     .then(data => {
-                        alert("Passeport trouvé ! Les champs ont été remplis.");
+                        showModal('Passeport trouvé', 'Les champs ont été remplis à partir du passeport.');
 
                         // Remplissage infos Passeport
                         pDateDelivrance.value = data.passeportDateDelivrance || data.dateDelivrance || '';
                         pDateExpiration.value = data.passeportDateExpiration || data.dateExpiration || '';
 
                         // Remplissage infos Demandeur
-                        if (data.demandeur) {
-                            // Le DTO de recherche peut exposer directement les champs (conforme à PasseportRechercheDto)
-                            dNom.value = data.nom || data.demandeur?.nom || '';
-                            dPrenom.value = data.prenom || data.demandeur?.prenom || '';
-                            dNomJeuneFille.value = data.nomJeuneFille || data.demandeur?.nomJeuneFille || '';
-                            dDateNaissance.value = data.dtn || data.demandeur?.dateNaissance || '';
-                            dAdresse.value = data.adresse || data.demandeur?.adresse || '';
-                            dEmail.value = data.email || data.demandeur?.email || '';
-                            dTelephone.value = data.telephone || data.demandeur?.telephone || '';
+                        dNom.value = data.nom || data.demandeur?.nom || '';
+                        dPrenom.value = data.prenom || data.demandeur?.prenom || '';
+                        dNomJeuneFille.value = data.nomJeuneFille || data.demandeur?.nomJeuneFille || '';
+                        dDateNaissance.value = data.dtn || data.demandeur?.dateNaissance || '';
+                        dAdresse.value = data.adresse || data.demandeur?.adresse || '';
+                        dEmail.value = data.email || data.demandeur?.email || '';
+                        dTelephone.value = data.telephone || data.demandeur?.telephone || '';
 
-                            if (data.situationFamilialeId) {
-                                dSituation.value = data.situationFamilialeId;
-                            }
-                            if (data.nationaliteId) {
-                                dNationalite.value = data.nationaliteId;
-                            }
-
-                            // On peut choisir ou non de bloquer les champs
-                            // dNom.readOnly = true; 
-                            // dprenom.readOnly = true;
+                        if (data.situationFamilialeId) {
+                            dSituation.value = data.situationFamilialeId;
+                        }
+                        if (data.nationaliteId) {
+                            dNationalite.value = data.nationaliteId;
                         }
                     })
                     .catch(error => {
-                        alert(error.message + " Veuillez remplir manuellement le formulaire pour enregistrer un nouveau.");
+                        showModal('Recherche passeport', error.message + ' Veuillez remplir manuellement le formulaire pour enregistrer un nouveau.');
                         // Vider les champs si le passeport n'a pas été trouvé pour une saisie propre
                         pDateDelivrance.value = '';
                         pDateExpiration.value = '';
@@ -268,7 +286,7 @@
                     });
             });
 
-            // GESTION DU DYNAMISME DES TYPES DE VISA (Pièces jointes) 
+            // GESTION DU DYNAMISME DES TYPES DE VISA (Pièces jointes)
             const selectTypeVisa = document.getElementById("selectTypeVisa");
             const dynamicContainer = document.getElementById("dynamicPiecesContainer");
             const piecesHtml = document.getElementById("piecesCheckboxesList");
@@ -281,27 +299,33 @@
                     return;
                 }
 
-                // Appel API pour récupérer les pièces et champs pour ce type de visa
-                fetch(`/api/types-visa/${visaId}/dynamique`)
-                    .then(response => {
-                        if (!response.ok) throw new Error("Erreur de récupération des données dynamiques.");
-                        return response.json();
-                    })
-                    .then(data => {
+                // Récupère pièces et champs via deux endpoints existants
+                const piecesUrl = `/demandes/type-visa/${visaId}/pieces`;
+                const champsUrl = `/demandes/type-visa/${visaId}/champs`;
+
+                Promise.all([
+                    fetch(piecesUrl),
+                    fetch(champsUrl)
+                ])
+                    .then(responses => Promise.all(responses.map(r => {
+                        if (!r.ok) throw new Error('Erreur de récupération des données dynamiques.');
+                        return r.json();
+                    })))
+                    .then(([piecesData, champsData]) => {
                         dynamicContainer.style.display = "block";
 
                         // Générer le HTML des pièces
-                        if (data.pieces && data.pieces.length > 0) {
+                        if (piecesData && piecesData.length > 0) {
                             let piecesMarkup = "";
-                            data.pieces.forEach(p => {
-                                const requiredAttr = p.obligatoire ? "required" : "";
-                                const requiredLabel = p.obligatoire ? "<span class='text-danger'>*</span>" : "(optionnel)";
+                            piecesData.forEach(p => {
+                                // Icône visuelle pour pièces obligatoires (backend gère la validation)
+                                const requiredIcon = p.obligatoire ? "<span class='text-danger fw-bold ms-1' title='Obligatoire' aria-hidden='true'>*</span>" : "<span class='text-muted ms-1'>(Optionnel)</span>";
                                 // name must match DemandeForm.pieceIds
                                 piecesMarkup += `
                                     <div class="form-check text-primary">
-                                        <input class="form-check-input" type="checkbox" name="pieceIds" value="${p.id}" id="piece_${p.id}" ${requiredAttr}>
+                                        <input class="form-check-input" type="checkbox" name="pieceIds" value="${p.id}" id="piece_${p.id}">
                                         <label class="form-check-label" for="piece_${p.id}">
-                                            ${p.nom} ${requiredLabel}
+                                            ${p.nom} ${requiredIcon}
                                         </label>
                                     </div>
                                 `;
@@ -312,19 +336,20 @@
                         }
 
                         // Générer le HTML des champs
-                        if (data.champs && data.champs.length > 0) {
+                        if (champsData && champsData.length > 0) {
                             let fieldsMarkup = "";
-                            data.champs.forEach(c => {
+                            champsData.forEach(c => {
                                 // Mappage du type de champ depuis DB vers form HTML (ex: date, text, number, etc.)
                                 let inputType = "text";
                                 if (c.typeChamp && c.typeChamp.toLowerCase() === "date") inputType = "date";
                                 else if (c.typeChamp && c.typeChamp.toLowerCase() === "number") inputType = "number";
 
                                 // name must match DemandeForm.champsDynamiques[<id>]
+                                // IMPORTANT: enlever 'required' pour que la validation soit faite côté backend
                                 fieldsMarkup += `
                                     <div class="mb-2">
                                         <label class="form-label text-primary">${c.nom}</label>
-                                        <input type="${inputType}" class="form-control" name="champsDynamiques[${c.id}]" required>
+                                        <input type="${inputType}" class="form-control" name="champsDynamiques[${c.id}]">
                                     </div>
                                 `;
                             });
@@ -336,9 +361,36 @@
                     .catch(error => {
                         console.error(error);
                         dynamicContainer.style.display = "none";
-                        alert("Impossible de charger les pièces justificatives et champs requis pour ce visa.");
+                        showModal('Données dynamiques', 'Impossible de charger les pièces justificatives et champs requis pour ce visa.');
                     });
             });
+
+            // Gestion du modal pour afficher les messages flash
+            const flashEl = document.getElementById('flashData');
+            const flashSuccess = flashEl?.dataset?.success;
+            const flashError = flashEl?.dataset?.error;
+
+            if (flashSuccess) {
+                showModal('Succès', flashSuccess, false);
+            } else if (flashError) {
+                showModal('Erreur', flashError, true);
+            }
+
+            function showModal(title, message, isError = false) {
+                const modalTitle = document.getElementById('flashModalLabel');
+                const modalBody = document.getElementById('flashModalBody');
+                modalTitle.textContent = title;
+                modalBody.innerHTML = message.replace(/\n/g, '<br>');
+                if (isError) {
+                    modalTitle.classList.remove('text-success');
+                    modalTitle.classList.add('text-danger');
+                } else {
+                    modalTitle.classList.remove('text-danger');
+                    modalTitle.classList.add('text-success');
+                }
+                const flashModal = new bootstrap.Modal(document.getElementById('flashModal'));
+                flashModal.show();
+            }
         });
     </script>
 </body>
