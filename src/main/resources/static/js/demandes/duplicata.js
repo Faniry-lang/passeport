@@ -83,8 +83,15 @@
             return;
         }
 
-        const payload = new FormData(form);
-        const response = await fetch(form.action, { method: "POST", body: payload });
+        const formData = new FormData(form);
+        const payload = {};
+        formData.forEach((value, key) => { payload[key] = value; });
+
+        const response = await fetch(form.action, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
         const data = await response.json().catch(() => null);
 
         if (data && data.success) {
