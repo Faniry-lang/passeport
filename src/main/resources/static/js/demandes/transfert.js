@@ -8,9 +8,14 @@
     const messageBox = document.getElementById("messageBox");
     const serverMessage = document.getElementById("serverMessage");
     const resultatRecherche = document.getElementById("resultatRecherche");
+    const sectionManuelle = document.getElementById("sectionManuelle");
+    const searchPasseport = document.getElementById("searchPasseport");
+    const btnSearchPasseport = document.getElementById("btnSearchPasseport");
 
     const identiteFields = [
-        "nom", "prenom", "nomJeuneFille", "dtn", "situationFamilialeId", "nationaliteId"
+        "nom", "prenom", "nomJeuneFille", "dtn", "situationFamilialeId", "nationaliteId",
+        "adresse", "email", "telephone", "passeportDateDelivrance", "passeportDateExpiration",
+        "typeVisaId", "dateEntree", "lieuEntree"
     ].map((id) => document.getElementById(id));
 
     function showMessage(text, ok) {
@@ -20,11 +25,23 @@
         messageBox.textContent = text;
     }
 
+    function toggleModeManuelle(manuel) {
+        if (manuel) {
+            sectionManuelle.classList.remove("collapse");
+            identiteFields.forEach(f => { if (f) f.required = true; });
+        } else {
+            sectionManuelle.classList.add("collapse");
+            identiteFields.forEach(f => { if (f) f.required = false; });
+        }
+    }
+
     function lockIdentite(lock) {
         identiteFields.forEach((f) => {
             if (f) f.readOnly = lock;
             if (f && f.tagName === "SELECT") f.disabled = lock;
         });
+        if (searchPasseport) searchPasseport.readOnly = lock;
+        if (btnSearchPasseport) btnSearchPasseport.disabled = lock;
     }
 
     function setField(id, value) {
@@ -33,7 +50,7 @@
         el.value = String(value);
     }
 
-    async function rechercher() {
+    async function rechercherDemande() {
         const idDemande = (idInput.value || "").trim();
         if (!idDemande) {
             showMessage("Saisir un id_demande avant la recherche.", false);
@@ -51,6 +68,7 @@
             return;
         }
 
+        toggleModeManuelle(false);
         const d = data.data || {};
         setField("idDemandeRecherche", d.demandeId || idDemande);
         setField("nom", d.nom);
@@ -65,6 +83,44 @@
         lockIdentite(true);
         resultatRecherche.textContent = `Demande #${d.demandeId || idDemande} chargee. Identite verrouillee.`;
         showMessage(data.message || "Recherche terminee.", true);
+    }
+
+    async function rechercherPasseportData() {
+        const numero = (searchPasseport.value || "").trim();
+        if (!numero) {
+            showMessage("Saisissez un numéro de passeport.", false);
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append("numero", numero);
+            const response = await fetch(`/demandes/recherche-passeport?numero=${encodeURIComponent(numero)}`);
+
+            if (response.ok) {
+                const data = await response.json();
+                setField("nom", data.demandeur.nom);
+                setField("prenom", data.demandeur.prenom);
+                setField("nomJeuneFille", data.demandeur.nomJeuneFille);
+                setField("dtn", data.demandeur.dtn);
+                setField("situationFamilialeId", data.demandeur.situationFamiliale.id);
+                setField("nationaliteId", data.demandeur.nationalite.id);
+                setField("adresse", data.demandeur.adresse);
+                setField("email", data.demandeur.email);
+                setField("telephone", data.demandeur.telephone);
+                setField("passeportDateDelivrance", data.dateDelivrance);
+                setField("passeportDateExpiration", data.dateExpiration);
+
+                const passeportActuel = document.getElementById("passeportActuel");
+                if (passeportActuel) setField("passeportActuel", numero);
+
+                showMessage("Passeport trouvé. Identité pré-remplie.", true);
+            } else {
+                showMessage("Passeport non trouvé.", false);
+            }
+        } catch (e) {
+            showMessage("Erreur réseau.", false);
+        }
     }
 
     function validationMinimale() {
@@ -88,7 +144,19 @@
                 nomJeuneFille: formData.get("nomJeuneFille"),
                 dtn: formData.get("dtn"),
                 situationFamilialeId: formData.get("situationFamilialeId"),
-                nationaliteId: formData.get("nationaliteId")
+                nationaliteId: formData.get("nationaliteId"),
+                adresse: formData.get("adresse"),
+                email: formData.get("email"),
+                telephone: formData.get("telephone"),
+                passeportNumero: formData.get("passeportActuel"),
+                passeportDateDelivrance: formData.get("passeportDateDelivrance"),
+                passeportDateExpiration: formData.get("passeportDateExpiration"),
+                typeVisaId: formData.get("typeVisaId"),
+                dateEntree: formData.get("dateEntree"),
+                lieuEntree: formData.get("lieuEntree"),
+                visaReference: formData.get("visaReferenceOptionnel"),
+                visaDateDelivrance: formData.get("visaDateDelivrance"),
+                visaDateExpiration: formData.get("visaDateExpiration")
             },
             nouveauPasseport: {
                 numero: formData.get("nouveauPasseportNumero"),
@@ -121,12 +189,18 @@
     }
 
     btnRecherche.addEventListener("click", function () {
-        rechercher().catch(() => showMessage("Erreur reseau pendant la recherche.", false));
+        rechercherDemande().catch(() => showMessage("Erreur reseau pendant la recherche.", false));
     });
 
+    if (btnSearchPasseport) {
+        btnSearchPasseport.addEventListener("click", rechercherPasseportData);
+    }
+
     btnModeManuel.addEventListener("click", function () {
+        idInput.value = "";
+        toggleModeManuelle(true);
         lockIdentite(false);
-        resultatRecherche.textContent = "Mode manuel actif. Completer tous les champs obligatoires.";
+        resultatRecherche.textContent = "Mode manuel actif. Completer l'identite complete requise.";
         showMessage("Mode creation manuelle active.", true);
     });
 

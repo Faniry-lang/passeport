@@ -64,7 +64,9 @@ public class DemandeService {
         verifierVisaNonExpire(visaTransformable);
 
         Set<Integer> piecesSelectionnees = normaliserPieces(form.getPieceIds());
-        validerPieces(typeVisa.getId(), piecesSelectionnees);
+        if (statutInitialId != StatusConstante.DEMANDE_APPROUVE) {
+            validerPieces(typeVisa.getId(), piecesSelectionnees);
+        }
 
         Demande demande = creerEtSauvegarderDemande(demandeur, passeport, visaTransformable, typeVisa);
 
@@ -156,7 +158,8 @@ public class DemandeService {
         incoherent |= estDifferent(form.getTelephone(), demandeur.getTelephone());
 
         if (incoherent) {
-            // Tolere les differences pour le flux actuel; controle metier renforcable plus tard.
+            // Tolere les differences pour le flux actuel; controle metier renforcable plus
+            // tard.
         }
     }
 
@@ -219,8 +222,7 @@ public class DemandeService {
             Demandeur demandeur,
             Passeport passeport,
             VisaTransformable visaTransformable,
-            TypeVisa typeVisa
-    ) {
+            TypeVisa typeVisa) {
         Demande demande = new Demande();
         demande.setDemandeur(demandeur);
         demande.setPasseport(passeport);
@@ -235,7 +237,8 @@ public class DemandeService {
             return;
         }
 
-        List<ReferencePieceJustificative> references = referencePieceJustificativeRepository.findAllById(piecesSelectionnees);
+        List<ReferencePieceJustificative> references = referencePieceJustificativeRepository
+                .findAllById(piecesSelectionnees);
         Map<Integer, ReferencePieceJustificative> referenceParId = references.stream()
                 .collect(Collectors.toMap(ReferencePieceJustificative::getId, piece -> piece));
 
@@ -298,8 +301,7 @@ public class DemandeService {
             Demande demande,
             TypeVisa typeVisa,
             DemandeForm form,
-            VisaTransformable visaTransformable
-    ) {
+            VisaTransformable visaTransformable) {
         Visa visa = new Visa();
         visa.setDemande(demande);
         visa.setTypeVisa(typeVisa);
