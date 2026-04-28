@@ -24,24 +24,20 @@ public class OperationTitreController {
         this.operationTitreService = operationTitreService;
     }
 
-    @GetMapping("/duplicata/nouvelle")
-    public ResponseEntity<?> nouvelleDuplicata(@RequestParam(value = "idDemande", required = false) Integer idDemande) {
-        try {
-            if (idDemande == null) {
-                return ResponseEntity.ok().body(new ApiResponse(true, "Ecran duplicata pret.", null));
-            }
-            OperationResult r = operationTitreService.prechargerDuplicata(idDemande);
-            return ResponseEntity.ok(new ApiResponse(true, r.getMessage(), r.getData()));
-        } catch (BusinessException be) {
-            return ResponseEntity.status(be.getStatus()).body(new ApiResponse(false, be.getMessage(), null));
-        }
-    }
-
     @GetMapping("/duplicata/recherche")
-    public ResponseEntity<?> rechercherDuplicata(@RequestParam("passeportNumero") String passeportNumero) {
+    public ResponseEntity<?> rechercherDuplicata(
+            @RequestParam(value = "idDemande", required = false) Integer idDemande,
+            @RequestParam(value = "passeportNumero", required = false) String passeportNumero) {
         try {
-            OperationResult r = operationTitreService.rechercherDuplicata(passeportNumero);
-            return ResponseEntity.ok(new ApiResponse(true, r.getMessage(), r.getData()));
+            if (idDemande != null) {
+                OperationResult r = operationTitreService.prechargerDuplicata(idDemande);
+                return ResponseEntity.ok(new ApiResponse(true, r.getMessage(), r.getData()));
+            }
+            if (passeportNumero != null) {
+                OperationResult r = operationTitreService.rechercherDuplicata(passeportNumero);
+                return ResponseEntity.ok(new ApiResponse(true, r.getMessage(), r.getData()));
+            }
+            return ResponseEntity.ok().body(new ApiResponse(true, "Recherche", null));
         } catch (BusinessException be) {
             return ResponseEntity.status(be.getStatus()).body(new ApiResponse(false, be.getMessage(), null));
         }
@@ -59,33 +55,20 @@ public class OperationTitreController {
         }
     }
 
-    @GetMapping("/transfert/nouvelle")
-    public ResponseEntity<?> nouvelleTransfert(
+    @GetMapping("/transfert/recherche")
+    public ResponseEntity<?> rechercherTransfert(
             @RequestParam(value = "idDemande", required = false) Integer idDemande,
-            @RequestParam(value = "visaReference", required = false) String visaReference
-    ) {
+            @RequestParam(value = "visaReference", required = false) String visaReference) {
         try {
             if (idDemande != null) {
                 OperationResult r = operationTitreService.prechargerTransfert(idDemande);
                 return ResponseEntity.ok(new ApiResponse(true, r.getMessage(), r.getData()));
             }
-
             if (visaReference != null && !visaReference.isBlank()) {
                 OperationResult r = operationTitreService.rechercherTransfert(visaReference);
                 return ResponseEntity.ok(new ApiResponse(true, r.getMessage(), r.getData()));
             }
-
-            return ResponseEntity.ok().body(new ApiResponse(true, "Ecran transfert pret.", null));
-        } catch (BusinessException be) {
-            return ResponseEntity.status(be.getStatus()).body(new ApiResponse(false, be.getMessage(), null));
-        }
-    }
-
-    @GetMapping("/transfert/recherche")
-    public ResponseEntity<?> rechercherTransfert(@RequestParam("visaReference") String visaReference) {
-        try {
-            OperationResult r = operationTitreService.rechercherTransfert(visaReference);
-            return ResponseEntity.ok(new ApiResponse(true, r.getMessage(), r.getData()));
+            return ResponseEntity.ok().body(new ApiResponse(true, "Recherche", null));
         } catch (BusinessException be) {
             return ResponseEntity.status(be.getStatus()).body(new ApiResponse(false, be.getMessage(), null));
         }

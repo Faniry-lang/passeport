@@ -1,0 +1,1 @@
+Tokony tsy misaraka ilay creation de carte de residence (ilay very) sy ilay soumission anle duplicata. Le truc zany ca cree 2 carte de residence (ilay very sy ilay duplication)
