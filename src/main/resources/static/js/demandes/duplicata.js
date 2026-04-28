@@ -74,11 +74,25 @@
             setContainerFieldsEnabled(carteResidentForm, true);
             carteResidentFields.forEach(f => { if (f) f.required = true; });
             carteResidentAutoCreationMode = true;
+            // When creating the carte resident automatically, the "carteResidentId" field
+            // (which is the target of the automatic creation) must not be required.
+            const carteResidentIdField = document.getElementById("carteResidentId");
+            if (carteResidentIdField) {
+                carteResidentIdField.dataset.wasRequired = carteResidentIdField.required ? "true" : "false";
+                carteResidentIdField.required = false;
+            }
         } else {
             carteResidentForm.classList.add("collapse");
             setContainerFieldsEnabled(carteResidentForm, false);
             carteResidentFields.forEach(f => { if (f) f.required = false; });
             carteResidentAutoCreationMode = false;
+            const carteResidentIdField = document.getElementById("carteResidentId");
+            if (carteResidentIdField) {
+                // restore previous required state if it was required before
+                if (carteResidentIdField.dataset && carteResidentIdField.dataset.wasRequired === "true") {
+                    carteResidentIdField.required = true;
+                }
+            }
         }
     }
 
@@ -177,17 +191,32 @@
 
             if (response.ok) {
                 const data = await response.json();
-                setField("nom", data.demandeur.nom);
-                setField("prenom", data.demandeur.prenom);
-                setField("nomJeuneFille", data.demandeur.nomJeuneFille);
-                setField("dtn", data.demandeur.dtn);
-                setField("situationFamilialeId", data.demandeur.situationFamiliale.id);
-                setField("nationaliteId", data.demandeur.nationalite.id);
-                setField("adresse", data.demandeur.adresse);
-                setField("email", data.demandeur.email);
-                setField("telephone", data.demandeur.telephone);
-                setField("passeportDateDelivrance", data.dateDelivrance);
-                setField("passeportDateExpiration", data.dateExpiration);
+                // Support two shapes returned by endpoints:
+                // 1) { demandeur: { ... }, dateDelivrance, dateExpiration }
+                // 2) PasseportRechercheDto with top-level fields (nom, prenom, ...)
+                const demandeur = data.demandeur ? data.demandeur : {
+                    nom: data.nom,
+                    prenom: data.prenom,
+                    nomJeuneFille: data.nomJeuneFille,
+                    dtn: data.dtn,
+                    situationFamiliale: { id: data.situationFamilialeId },
+                    nationalite: { id: data.nationaliteId },
+                    adresse: data.adresse,
+                    email: data.email,
+                    telephone: data.telephone
+                };
+
+                setField("nom", demandeur.nom);
+                setField("prenom", demandeur.prenom);
+                setField("nomJeuneFille", demandeur.nomJeuneFille);
+                setField("dtn", demandeur.dtn);
+                setField("situationFamilialeId", demandeur.situationFamiliale && demandeur.situationFamiliale.id ? demandeur.situationFamiliale.id : data.situationFamilialeId);
+                setField("nationaliteId", demandeur.nationalite && demandeur.nationalite.id ? demandeur.nationalite.id : data.nationaliteId);
+                setField("adresse", demandeur.adresse);
+                setField("email", demandeur.email);
+                setField("telephone", demandeur.telephone);
+                setField("passeportDateDelivrance", data.dateDelivrance || data.passeportDateDelivrance);
+                setField("passeportDateExpiration", data.dateExpiration || data.passeportDateExpiration);
                 setField("passeportNumero", numero);
 
                 showMessage("Passeport trouvé. Identité pré-remplie.", true);
@@ -195,6 +224,7 @@
                 showMessage("Passeport non trouvé.", false);
             }
         } catch (e) {
+            console.log(e);
             showMessage("Erreur réseau.", false);
         }
     }

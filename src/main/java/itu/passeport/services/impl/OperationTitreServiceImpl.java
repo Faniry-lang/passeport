@@ -141,13 +141,19 @@ public class OperationTitreServiceImpl implements OperationTitreService {
                     "Incoherence: le titulaire de la demande ne correspond pas a la carte resident source.");
         }
 
-        StatutCarteResident statutActuel = statutCarteResidentRepository
-                .findFirstByCarteResidentIdOrderByDateStatutDesc(carteSource.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Statut de la carte resident source introuvable."));
+        try {
+            StatutCarteResident statutActuel = statutCarteResidentRepository
+                    .findFirstByCarteResidentIdOrderByDateStatutDesc(carteSource.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Statut de la carte resident source introuvable."));
 
-        if (!STATUT_CARTE_VALIDE.equalsIgnoreCase(statutActuel.getReferenceStatutCarteResident().getNom())) {
-            throw new ConflictException("La carte resident source n'est pas eligible (statut non VALIDE).");
+            if (!STATUT_CARTE_VALIDE.equalsIgnoreCase(statutActuel.getReferenceStatutCarteResident().getNom())) {
+                throw new ConflictException("La carte resident source n'est pas eligible (statut non VALIDE).");
+            }
+        } catch(ResourceNotFoundException e) {
+            System.out.println("Aucun statut trouvé pour la carte résident ");
         }
+
+
 
         String motif = normaliserMotif(form.getMotif());
         if (!MOTIFS_DUPLICATA.contains(motif)) {
