@@ -84,8 +84,21 @@
         }
 
         const formData = new FormData(form);
-        const payload = {};
-        formData.forEach((value, key) => { payload[key] = value; });
+        const payload = {
+            idDemande: formData.get("idDemande") || null,
+            carteResidentId: formData.get("carteResidentId") || null,
+            passeportNumero: formData.get("passeportNumero"),
+            carteResidentNumero: formData.get("carteResidentNumero"),
+            motif: formData.get("motif"),
+            demande: {
+                nom: formData.get("nom"),
+                prenom: formData.get("prenom"),
+                nomJeuneFille: formData.get("nomJeuneFille"),
+                dtn: formData.get("dtn"),
+                situationFamilialeId: formData.get("situationFamilialeId"),
+                nationaliteId: formData.get("nationaliteId")
+            }
+        };
 
         const response = await fetch(form.action, {
             method: "POST",

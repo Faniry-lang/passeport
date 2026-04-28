@@ -79,8 +79,23 @@
         }
 
         const formData = new FormData(form);
-        const payload = {};
-        formData.forEach((value, key) => { payload[key] = value; });
+        const payload = {
+            idDemande: formData.get("idDemande") || null,
+            visaReference: formData.get("visaReference"),
+            demande: {
+                nom: formData.get("nom"),
+                prenom: formData.get("prenom"),
+                nomJeuneFille: formData.get("nomJeuneFille"),
+                dtn: formData.get("dtn"),
+                situationFamilialeId: formData.get("situationFamilialeId"),
+                nationaliteId: formData.get("nationaliteId")
+            },
+            nouveauPasseport: {
+                numero: formData.get("nouveauPasseportNumero"),
+                dateDelivrance: formData.get("nouveauPasseportDateDelivrance"),
+                dateExpiration: formData.get("nouveauPasseportDateExpiration")
+            }
+        };
 
         const response = await fetch(form.action, {
             method: "POST",
