@@ -1,98 +1,98 @@
-SPRINT 2 — DUPLICATA CARTE RESIDENT + TRANSFERT VISA
-
-========================
 FANIRY (BACKEND)
 ====================================================
 
 ## Branche: sprint/2/duplicata-transfert/backend
 
 * Contraintes Globales :
-    * AUCUNE modification de la structure de base de donnees (les tables `carte_resident`, `visa`, `demande`, `statut_demande` sont suffisantes telles quelles).
-    * Pour realiser une operation (Duplicata ou Transfert), le systeme doit imperativenent associer une `demande`.
-    * Principe de la demande: Soit l'agent saisit un `id_demande` existant pour recuperer l'identite du demandeur, soit il cree une nouvelle demande depuis l'ecran courant qui sera directement liee et approuvee (`statut_demande = APPROUVE`).
+        * AUCUNE modification de la structure de base de donnees (les tables `carte_resident`, `visa`, `demande`, `statut_demande` sont suffisantes telles quelles).
+        * Pour realiser une operation (Duplicata ou Transfert), le systeme doit imperativement associer une `demande`.
+        * Principe de la demande: Soit l'agent saisit un `id_demande` existant pour recuperer l'identite du demandeur, soit il cree une nouvelle demande depuis l'ecran courant qui sera directement liee et approuvee (`statut_demande = APPROUVE`).
 
 * Objectif
 
-    * implementer la logique metier complete des 2 fonctionnalites
-    * chaque fonctionnalite doit etre liee a une demande (soit existante passee en parametre, soit creee a la volee et directement approuvee)
+        * implementer la logique metier complete des 2 fonctionnalites
+        * chaque fonctionnalite doit etre liee a une demande (soit existante passee en parametre, soit creee a la volee et directement approuvee)
 
 * Taches repositories a creer
 
-    * `CarteResidentRepository`
-    * `StatutCarteResidentRepository`
-    * `ReferenceStatutCarteResidentRepository`
-    * `StatutVisaRepository`
-    * `ReferenceStatutVisaRepository`
+        * `CarteResidentRepository`
+        * `StatutCarteResidentRepository`
+        * `ReferenceStatutCarteResidentRepository`
+        * `StatutVisaRepository`
+        * `ReferenceStatutVisaRepository`
 
 * Taches constantes
 
-    * ajouter dans `StatusConstante`:
+        * ajouter dans `StatusConstante`:
 
-        * `DEMANDE_APPROUVE = 3`
+                * `DEMANDE_APPROUVE = 3`
 
 * Taches DTO backend
 
-    * creer `DuplicataForm`
-    * creer `TransfertVisaForm`
-    * ne pas modifier `DemandeForm`
+        * creer `DuplicataForm`
+        * creer `TransfertVisaForm`
+        * ne pas modifier `DemandeForm`
 
 * Taches service
 
-    * creer un service dedie (exemple: `OperationTitreService`)
-    * exposer ces methodes:
+        * creer un service dedie (exemple: `OperationTitreService`)
+        * exposer ces methodes:
 
-        * `traiterDuplicata(DuplicataForm form)`
-        * `traiterTransfertVisa(TransfertVisaForm form)`
+                * `traiterDuplicata(DuplicataForm form)`
+                * `traiterTransfertVisa(TransfertVisaForm form)`
 
 * Regles metier obligatoires — DUPLICATA
 
-    1. verifier le choix ou la creation de la `demande`:
-       - Soit on passe `id_demande` existante
-       - Soit on cree une `demande` (avec statut a APPROUVE)
-    2. lier les informations identite demandeur a cette `demande`
-    3. verifier existence carte resident source et que la demande et titulaire correspondent
-    4. verifier carte resident eligible (statut courant VALIDE)
-    5. verifier motif duplicata dans {PERTE, DETERIORATION}
-    6. creer la nouvelle carte resident liee a cette demande
-    7. invalider l'ancienne carte
+        1. verifier le choix ou la creation de la `demande`:
+             - Soit on passe `id_demande` existante
+             - Soit on cree une `demande` (avec statut a APPROUVE)
+        2. lier les informations identite demandeur a cette `demande`
+        3. verifier existence carte resident source et que la demande et titulaire correspondent
+        4. verifier carte resident eligible (statut courant VALIDE)
+        5. verifier motif duplicata dans {PERTE, DETERIORATION}
+        6. creer la nouvelle carte resident liee a cette demande
+        7. invalider l'ancienne carte
 
 * Regles metier obligatoires — TRANSFERT
 
-    1. verifier le choix ou la creation de la `demande` de transfert (comme duplicata)
-    2. lier les informations identite demandeur a la `demande`
-    3. verifier existence visa transformable par reference
-    4. verifier visa non expire
-    5. verifier ancien passeport lie est expire
-    6. verifier nouveau passeport est valide
-    7. verifier coherence demandeur entre ancien et nouveau passeport
-    8. mettre a jour `visa_transformable.passeport_id` vers le nouveau passeport
-    9. conserver la trace de transfert via la demande (creee/approuvee ou transferee)
+        1. verifier le choix ou la creation de la `demande` de transfert (comme duplicata)
+        2. lier les informations identite demandeur a la `demande`
+        3. verifier existence visa transformable par reference
+        4. verifier visa non expire
+        5. verifier ancien passeport lie est expire
+        6. verifier nouveau passeport est valide
+        7. verifier coherence demandeur entre ancien et nouveau passeport
+        8. mettre a jour `visa_transformable.passeport_id` vers le nouveau passeport
+        9. conserver la trace de transfert via la demande (creee/approuvee ou transferee)
 
 * Taches controller/backend API
 
-    * ajouter routes:
+        * ajouter routes:
 
-        * `GET /demandes/duplicata/nouvelle`
-        * `POST /demandes/duplicata`
-        * `GET /demandes/transfert/nouvelle`
-        * `POST /demandes/transfert`
-        * `GET /demandes/duplicata/recherche?passeportNumero=...`
-        * `GET /demandes/transfert/recherche?visaReference=...`
+                * `GET /demandes/duplicata/nouvelle`
+                * `POST /demandes/duplicata`
+                * `GET /demandes/transfert/nouvelle`
+                * `POST /demandes/transfert`
+                * `GET /demandes/duplicata/recherche?passeportNumero=...`
+                * `GET /demandes/transfert/recherche?visaReference=...`
 
 * Contrat reponse API
 
-    * succes: `success=true`, `message`, `data`
-    * erreurs:
+        * succes: `success=true`, `message`, `data`
+        * erreurs:
 
-        * `400` donnees invalides
-        * `404` ressource introuvable
-        * `409` conflit metier
+                * `400` donnees invalides
+                * `404` ressource introuvable
+                * `409` conflit metier
 
 * Qualite technique
 
-    * `@Transactional` sur chaque traitement complet
-    * rollback sur toute erreur metier
-    * supprimer tout `System.out.println`
+        * `@Transactional` sur chaque traitement complet
+        * rollback sur toute erreur metier
+        * supprimer tout `System.out.println`
+- Implémentation des DTOs, Service, Repositories et Controller avec leurs signatures et tests minimaux pour valider les flux heureux et les échecs métiers.
+
+---
 
 ========================
 MANJAKA (FRONTEND)
