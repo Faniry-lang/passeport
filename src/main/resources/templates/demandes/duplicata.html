@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Duplicata')}"></head>
+<body>
+<div class="container-fluid">
+    <div class="row">
+        <nav th:replace="~{fragments/layout :: sidebar}"></nav>
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 mt-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Duplicata carte resident</h1>
+            </div>
+
+            <div id="messageBox" class="alert d-none"></div>
+            <div th:if="${message}" id="serverMessage" class="d-none" th:text="${message}"></div>
+
+            <form id="duplicataForm" action="/demandes/duplicata" method="post" class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="text-primary border-bottom pb-2">1) Choisir le mode</h5>
+                    <div class="row g-3 align-items-end mb-3">
+                        <div class="col-md-8">
+                            <label for="idDemandeRecherche" class="form-label">id_demande (optionnel)</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="idDemandeRecherche" name="idDemande" min="1" placeholder="Ex: 12">
+                                <button type="button" id="btnRecherche" class="btn btn-outline-primary">Chercher</button>
+                            </div>
+                            <small class="text-muted">Mode prioritaire: rechercher puis verrouiller l'identite. Sinon passer en creation manuelle.</small>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="button" id="btnModeManuel" class="btn btn-outline-secondary w-100">Remplir manuellement</button>
+                        </div>
+                    </div>
+
+                    <div id="resultatRecherche" class="alert alert-light border">Aucune recherche effectuee.</div>
+
+                    <h5 class="text-primary border-bottom pb-2 mt-4">2) Identite demandeur</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4"><label class="form-label">Nom</label><input id="nom" name="nom" class="form-control" required></div>
+                        <div class="col-md-4"><label class="form-label">Prenom</label><input id="prenom" name="prenom" class="form-control"></div>
+                        <div class="col-md-4"><label class="form-label">Nom jeune fille</label><input id="nomJeuneFille" name="nomJeuneFille" class="form-control"></div>
+                        <div class="col-md-4"><label class="form-label">Date naissance</label><input id="dtn" name="dtn" type="date" class="form-control" required></div>
+                        <div class="col-md-4"><label class="form-label">Situation familiale id</label><input id="situationFamilialeId" name="situationFamilialeId" type="number" min="1" class="form-control" required></div>
+                        <div class="col-md-4"><label class="form-label">Nationalite id</label><input id="nationaliteId" name="nationaliteId" type="number" min="1" class="form-control" required></div>
+                    </div>
+
+                    <h5 class="text-primary border-bottom pb-2 mt-4">3) Infos operation</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4"><label class="form-label">Passeport courant</label><input id="passeportNumero" name="passeportNumero" class="form-control" required></div>
+                        <div class="col-md-4"><label class="form-label">Carte resident source (id)</label><input id="carteResidentId" name="carteResidentId" type="number" min="1" class="form-control" required></div>
+                        <div class="col-md-4"><label class="form-label">Motif</label>
+                            <select id="motif" name="motif" class="form-select" required>
+                                <option value="">-- Choisir --</option>
+                                <option value="PERTE">PERTE</option>
+                                <option value="DETERIORATION">DETERIORATION</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Soumettre duplicata</button>
+                        <a class="btn btn-outline-secondary" href="/demandes/nouvelle">Retour</a>
+                    </div>
+                </div>
+            </form>
+        </main>
+    </div>
+</div>
+<script th:src="@{/js/demandes/duplicata.js}"></script>
+</body>
+</html>
+
