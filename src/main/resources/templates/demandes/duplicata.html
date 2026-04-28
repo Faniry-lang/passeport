@@ -31,9 +31,13 @@
                                 <small class="text-muted">Mode prioritaire: rechercher puis verrouiller l'identite.
                                     Sinon passer en creation manuelle.</small>
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-2">
                                 <button type="button" id="btnModeManuel" class="btn btn-outline-secondary w-100">Remplir
                                     manuellement</button>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" id="btnCarteResident" class="btn btn-outline-info w-100">Carte
+                                    Résident</button>
                             </div>
                         </div>
 
@@ -144,6 +148,33 @@
                                     <label class="form-label">Date d'expiration</label>
                                     <input type="date" class="form-control" name="visaDateExpiration"
                                         id="visaDateExpiration">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- CARTE RÉSIDENT FORM -->
+                        <div id="carteResidentForm" class="collapse">
+                            <h5 class="text-primary border-bottom pb-2 mt-4">Création Carte Résident</h5>
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                Remplissez ce formulaire pour créer une carte résident. L'ID généré sera automatiquement
+                                assigné au champ "Carte resident source (id)" ci-dessous.
+                            </div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Date de début de validité</label>
+                                    <input type="date" id="carteResidentDateDebut" name="carteResidentDateDebut"
+                                        class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Date de fin de validité</label>
+                                    <input type="date" id="carteResidentDateFin" name="carteResidentDateFin"
+                                        class="form-control" required>
+                                </div>
+                                <div class="col-12">
+                                    <button type="button" id="btnCreerCarteResident" class="btn btn-success">
+                                        <i class="bi bi-plus-circle"></i> Créer la Carte Résident
+                                    </button>
                                 </div>
                             </div>
                         </div>

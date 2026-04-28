@@ -5,10 +5,13 @@
     const idInput = document.getElementById("idDemandeRecherche");
     const btnRecherche = document.getElementById("btnRecherche");
     const btnModeManuel = document.getElementById("btnModeManuel");
+    const btnCarteResident = document.getElementById("btnCarteResident");
     const messageBox = document.getElementById("messageBox");
     const serverMessage = document.getElementById("serverMessage");
     const resultatRecherche = document.getElementById("resultatRecherche");
     const sectionManuelle = document.getElementById("sectionManuelle");
+    const carteResidentForm = document.getElementById("carteResidentForm");
+    const btnCreerCarteResident = document.getElementById("btnCreerCarteResident");
     const searchPasseport = document.getElementById("searchPasseport");
     const btnSearchPasseport = document.getElementById("btnSearchPasseport");
 
@@ -16,6 +19,10 @@
         "nom", "prenom", "nomJeuneFille", "dtn", "situationFamilialeId", "nationaliteId",
         "adresse", "email", "telephone", "passeportDateDelivrance", "passeportDateExpiration",
         "typeVisaId", "dateEntree", "lieuEntree"
+    ].map((id) => document.getElementById(id));
+
+    const carteResidentFields = [
+        "carteResidentDateDebut", "carteResidentDateFin"
     ].map((id) => document.getElementById(id));
 
     function showMessage(text, ok) {
@@ -35,6 +42,16 @@
         }
     }
 
+    function toggleCarteResidentForm(show) {
+        if (show) {
+            carteResidentForm.classList.remove("collapse");
+            carteResidentFields.forEach(f => { if (f) f.required = true; });
+        } else {
+            carteResidentForm.classList.add("collapse");
+            carteResidentFields.forEach(f => { if (f) f.required = false; });
+        }
+    }
+
     function lockIdentite(lock) {
         identiteFields.forEach((f) => {
             if (f) f.readOnly = lock;
@@ -42,6 +59,41 @@
         });
         if (searchPasseport) searchPasseport.readOnly = lock;
         if (btnSearchPasseport) btnSearchPasseport.disabled = lock;
+    }
+
+    function clearCarteResidentForm() {
+        carteResidentFields.forEach(f => { if (f) f.value = ""; });
+    }
+
+    function validateCarteResidentForm() {
+        const dateDebut = document.getElementById("carteResidentDateDebut").value;
+        const dateFin = document.getElementById("carteResidentDateFin").value;
+
+        // Validation des champs de la carte résident
+        if (!dateDebut || !dateFin) {
+            showMessage("Les dates de début et fin de validité sont obligatoires.", false);
+            return false;
+        }
+
+        if (new Date(dateFin) <= new Date(dateDebut)) {
+            showMessage("La date de fin doit être postérieure à la date de début.", false);
+            return false;
+        }
+
+        // Validation des champs d'identité requis pour la création de carte résident
+        const nom = document.getElementById("nom").value.trim();
+        const prenom = document.getElementById("prenom").value.trim();
+        const dtn = document.getElementById("dtn").value;
+        const situationFamilialeId = document.getElementById("situationFamilialeId").value;
+        const nationaliteId = document.getElementById("nationaliteId").value;
+        const adresse = document.getElementById("adresse").value.trim();
+
+        if (!nom || !prenom || !dtn || !situationFamilialeId || !nationaliteId || !adresse) {
+            showMessage("Les informations d'identité (nom, prénom, date de naissance, situation familiale, nationalité, adresse) sont obligatoires pour créer une carte résident.", false);
+            return false;
+        }
+
+        return true;
     }
 
     function setField(id, value) {
@@ -135,12 +187,103 @@
     btnModeManuel.addEventListener("click", function () {
         idInput.value = "";
         toggleModeManuelle(true);
+        toggleCarteResidentForm(false);
         lockIdentite(false);
+        clearCarteResidentForm();
         resultatRecherche.textContent = "Mode manuel actif. Completer l'identite complete requise.";
         showMessage("Mode creation manuelle active.", true);
     });
 
+    if (btnCarteResident) {
+        btnCarteResident.addEventListener("click", function () {
+            idInput.value = "";
+            toggleModeManuelle(true); // Activer aussi le formulaire d'identité
+            toggleCarteResidentForm(true);
+            lockIdentite(false);
+            clearCarteResidentForm();
+            resultatRecherche.textContent = "Mode carte résident actif. Remplissez l'identité puis créez la carte résident pour obtenir l'ID.";
+            showMessage("Mode création carte résident active. Remplissez d'abord les informations d'identité.", true);
+        });
+    }
+
+    async function creerCarteResident() {
+        if (!validateCarteResidentForm()) {
+            return;
+        }
+
+        const formData = {
+            dateDebut: document.getElementById("carteResidentDateDebut").value,
+            dateFin: document.getElementById("carteResidentDateFin").value,
+            demandeur: {
+                nom: document.getElementById("nom").value.trim(),
+                prenom: document.getElementById("prenom").value.trim(),
+                nomJeuneFille: document.getElementById("nomJeuneFille").value.trim(),
+                dtn: document.getElementById("dtn").value,
+                situationFamilialeId: document.getElementById("situationFamilialeId").value,
+                nationaliteId: document.getElementById("nationaliteId").value,
+                adresse: document.getElementById("adresse").value.trim(),
+                email: document.getElementById("email").value.trim(),
+                telephone: document.getElementById("telephone").value.trim()
+            },
+            passeportNumero: document.getElementById("passeportNumero").value.trim()
+        };
+
+        try {
+            const response = await fetch("/api/cartes-resident/create", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json().catch(() => null);
+
+            if (response.ok && data && data.success) {
+                const carteResidentId = data.data.id;
+                setField("carteResidentId", carteResidentId);
+
+                // Pré-remplir aussi les informations du demandeur depuis la réponse
+                if (data.data.demandeur) {
+                    setField("nom", data.data.demandeur.nom);
+                    setField("prenom", data.data.demandeur.prenom);
+                    setField("nomJeuneFille", data.data.demandeur.nomJeuneFille);
+                    setField("dtn", data.data.demandeur.dtn);
+                    setField("situationFamilialeId", data.data.demandeur.situationFamilialeId);
+                    setField("nationaliteId", data.data.demandeur.nationaliteId);
+                    setField("adresse", data.data.demandeur.adresse);
+                    setField("email", data.data.demandeur.email);
+                    setField("telephone", data.data.demandeur.telephone);
+                }
+
+                showMessage(`Carte résident créée avec succès (ID: ${carteResidentId}). L'ID a été assigné automatiquement.`, true);
+                resultatRecherche.textContent = `Carte résident #${carteResidentId} créée. Vous pouvez maintenant remplir les informations de duplicata.`;
+
+                // Fermer le formulaire de carte résident après création
+                setTimeout(() => {
+                    toggleCarteResidentForm(false);
+                    // Garder le mode manuel actif pour permettre la saisie des autres informations
+                }, 2000);
+            } else {
+                showMessage((data && data.message) || "Erreur lors de la création de la carte résident.", false);
+            }
+        } catch (e) {
+            showMessage("Erreur réseau lors de la création de la carte résident.", false);
+        }
+    }
+
+    if (btnCreerCarteResident) {
+        btnCreerCarteResident.addEventListener("click", creerCarteResident);
+    }
+
     function validationMinimale() {
+        // Vérifier si le formulaire de carte résident est visible
+        const isCarteResidentVisible = !carteResidentForm.classList.contains("collapse");
+
+        if (isCarteResidentVisible) {
+            // Si le formulaire de carte résident est visible, valider ce formulaire
+            return validateCarteResidentForm() && form.checkValidity();
+        }
+
+        // Sinon, validation normale du formulaire
         return form.checkValidity();
     }
 

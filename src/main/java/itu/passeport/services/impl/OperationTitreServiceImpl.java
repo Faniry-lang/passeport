@@ -137,7 +137,8 @@ public class OperationTitreServiceImpl implements OperationTitreService {
         CarteResident carteSource = resoudreCarteSource(form);
 
         if (!memeDemandeur(demande.getDemandeur(), carteSource.getPasseport().getDemandeur())) {
-            throw new ConflictException("Incoherence: le titulaire de la demande ne correspond pas a la carte resident source.");
+            throw new ConflictException(
+                    "Incoherence: le titulaire de la demande ne correspond pas a la carte resident source.");
         }
 
         StatutCarteResident statutActuel = statutCarteResidentRepository
@@ -160,10 +161,14 @@ public class OperationTitreServiceImpl implements OperationTitreService {
         nouvelleCarte.setDateFin(carteSource.getDateFin());
         nouvelleCarte = carteResidentRepository.save(nouvelleCarte);
 
-        ReferenceStatutCarteResident refValide = referenceStatutCarteResidentRepository.findByNomIgnoreCase(STATUT_CARTE_VALIDE)
-                .orElseThrow(() -> new ResourceNotFoundException("Reference statut carte resident VALIDE introuvable."));
-        ReferenceStatutCarteResident refExpire = referenceStatutCarteResidentRepository.findByNomIgnoreCase(STATUT_CARTE_EXPIRE)
-                .orElseThrow(() -> new ResourceNotFoundException("Reference statut carte resident EXPIRE introuvable."));
+        ReferenceStatutCarteResident refValide = referenceStatutCarteResidentRepository
+                .findByNomIgnoreCase(STATUT_CARTE_VALIDE)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Reference statut carte resident VALIDE introuvable."));
+        ReferenceStatutCarteResident refExpire = referenceStatutCarteResidentRepository
+                .findByNomIgnoreCase(STATUT_CARTE_EXPIRE)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Reference statut carte resident EXPIRE introuvable."));
 
         StatutCarteResident statutNouvelle = new StatutCarteResident();
         statutNouvelle.setCarteResident(nouvelleCarte);
@@ -202,11 +207,13 @@ public class OperationTitreServiceImpl implements OperationTitreService {
             throw new BusinessException(HttpStatus.BAD_REQUEST, "La reference de visa est obligatoire.");
         }
 
-        VisaTransformable visaTransformable = visaTransformableRepository.findByReference(form.getVisaReference().trim())
+        VisaTransformable visaTransformable = visaTransformableRepository
+                .findByReference(form.getVisaReference().trim())
                 .orElseThrow(() -> new ResourceNotFoundException("Visa transformable introuvable."));
 
         LocalDate maintenant = LocalDate.now();
-        if (visaTransformable.getDateExpiration() != null && visaTransformable.getDateExpiration().isBefore(maintenant)) {
+        if (visaTransformable.getDateExpiration() != null
+                && visaTransformable.getDateExpiration().isBefore(maintenant)) {
             throw new ConflictException("Le visa transformable est expire.");
         }
 
@@ -215,7 +222,8 @@ public class OperationTitreServiceImpl implements OperationTitreService {
             throw new ConflictException("L'ancien passeport lie au visa doit etre expire.");
         }
 
-        Passeport nouveauPasseport = resoudreOuCreerNouveauPasseport(form.getNouveauPasseport(), ancienPasseport.getDemandeur());
+        Passeport nouveauPasseport = resoudreOuCreerNouveauPasseport(form.getNouveauPasseport(),
+                ancienPasseport.getDemandeur());
 
         if (nouveauPasseport.getDateExpiration() == null || !nouveauPasseport.getDateExpiration().isAfter(maintenant)) {
             throw new ConflictException("Le nouveau passeport doit etre valide.");
