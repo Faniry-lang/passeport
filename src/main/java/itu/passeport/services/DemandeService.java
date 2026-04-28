@@ -45,32 +45,35 @@ public class DemandeService {
 
     @Transactional
     public Demande creerDemande(DemandeForm form) {
-        try {
-            TypeVisa typeVisa = getTypeVisa(form.getTypeVisaId());
-            validerTypeVisaSupporte(typeVisa);
+        return creerDemandeAvecStatut(form, StatusConstante.DEMANDE_CREE);
+    }
 
-            Passeport passeport = chargerOuCreerPasseport(form);
-            Demandeur demandeur = passeport.getDemandeur();
+    @Transactional
+    public Demande creerDemandeApprouvee(DemandeForm form) {
+        return creerDemandeAvecStatut(form, StatusConstante.DEMANDE_APPROUVE);
+    }
 
-            VisaTransformable visaTransformable = chargerOuCreerVisaTransformable(form, passeport);
-            verifierVisaNonExpire(visaTransformable);
+    private Demande creerDemandeAvecStatut(DemandeForm form, int statutInitialId) {
+        TypeVisa typeVisa = getTypeVisa(form.getTypeVisaId());
+        validerTypeVisaSupporte(typeVisa);
 
-            Set<Integer> piecesSelectionnees = normaliserPieces(form.getPieceIds());
+        Passeport passeport = chargerOuCreerPasseport(form);
+        Demandeur demandeur = passeport.getDemandeur();
+
+        VisaTransformable visaTransformable = chargerOuCreerVisaTransformable(form, passeport);
+        verifierVisaNonExpire(visaTransformable);
+
+        Set<Integer> piecesSelectionnees = normaliserPieces(form.getPieceIds());
+        if (statutInitialId != StatusConstante.DEMANDE_APPROUVE) {
             validerPieces(typeVisa.getId(), piecesSelectionnees);
-
-            Demande demande = creerEtSauvegarderDemande(demandeur, passeport, visaTransformable, typeVisa);
-
-            insererPiecesDemande(demande, piecesSelectionnees);
-            insererChampsDynamiques(demande, typeVisa.getId(), form.getChampsDynamiques());
-            initialiserStatut(demande);
-            //creerVisa(demande, typeVisa, form, visaTransformable);
-
-            return demande;
-        } catch(Exception e) {
-            System.out.println(e.getMessage());
-            throw e;
         }
 
+        Demande demande = creerEtSauvegarderDemande(demandeur, passeport, visaTransformable, typeVisa);
+
+        insererPiecesDemande(demande, piecesSelectionnees);
+        insererChampsDynamiques(demande, typeVisa.getId(), form.getChampsDynamiques());
+        initialiserStatut(demande, statutInitialId);
+        return demande;
     }
 
     private PasseportRechercheDto toRechercheDto(Passeport passeport) {
@@ -154,9 +157,10 @@ public class DemandeService {
         incoherent |= estDifferent(form.getEmail(), demandeur.getEmail());
         incoherent |= estDifferent(form.getTelephone(), demandeur.getTelephone());
 
-//        if (incoherent) {
-//            throw new DonneesIncoherentesException("Donnees incoherentes avec le passeport existant.");
-//        }
+        if (incoherent) {
+            // Tolere les differences pour le flux actuel; controle metier renforcable plus
+            // tard.
+        }
     }
 
     private VisaTransformable chargerOuCreerVisaTransformable(DemandeForm form, Passeport passeport) {
@@ -218,8 +222,7 @@ public class DemandeService {
             Demandeur demandeur,
             Passeport passeport,
             VisaTransformable visaTransformable,
-            TypeVisa typeVisa
-    ) {
+            TypeVisa typeVisa) {
         Demande demande = new Demande();
         demande.setDemandeur(demandeur);
         demande.setPasseport(passeport);
@@ -234,7 +237,8 @@ public class DemandeService {
             return;
         }
 
-        List<ReferencePieceJustificative> references = referencePieceJustificativeRepository.findAllById(piecesSelectionnees);
+        List<ReferencePieceJustificative> references = referencePieceJustificativeRepository
+                .findAllById(piecesSelectionnees);
         Map<Integer, ReferencePieceJustificative> referenceParId = references.stream()
                 .collect(Collectors.toMap(ReferencePieceJustificative::getId, piece -> piece));
 
@@ -281,8 +285,8 @@ public class DemandeService {
         }
     }
 
-    private void initialiserStatut(Demande demande) {
-        ReferenceStatutDemande referenceStatut = referenceStatutDemandeRepository.findById(StatusConstante.DEMANDE_CREE)
+    private void initialiserStatut(Demande demande, int statutId) {
+        ReferenceStatutDemande referenceStatut = referenceStatutDemandeRepository.findById(statutId)
                 .orElseThrow(() -> new RessourceIntrouvableException("Statut initial introuvable."));
 
         StatutDemande statutDemande = new StatutDemande();
@@ -292,12 +296,12 @@ public class DemandeService {
         statutDemandeRepository.save(statutDemande);
     }
 
+    @SuppressWarnings("unused")
     private void creerVisa(
             Demande demande,
             TypeVisa typeVisa,
             DemandeForm form,
-            VisaTransformable visaTransformable
-    ) {
+            VisaTransformable visaTransformable) {
         Visa visa = new Visa();
         visa.setDemande(demande);
         visa.setTypeVisa(typeVisa);
