@@ -112,10 +112,7 @@ public class DemandeController {
             RedirectAttributes redirectAttributes
     ) {
         try {
-            System.out.println("=====DEBUG=====");
             Demande demande = demandeService.creerDemande(demandeForm);
-            System.out.println("DEMANDE ID: "+demande.getId());
-            System.out.println("===FIN DEBUG===");
             redirectAttributes.addFlashAttribute("successMessage", "Demande creee avec succes.");
             redirectAttributes.addFlashAttribute("demandeId", demande.getId());
             return "redirect:/demandes/confirmation";
