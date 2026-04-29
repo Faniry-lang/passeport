@@ -85,8 +85,6 @@ Comportement UI:
     - bouton `Telecharger` si fichier existe
 - En haut:
     - bouton `Valider` uniquement (sauvegarde des uploads en cours)
-- Page liste des demandes:
-    - bouton `Scan termine` pour changer l'etat du dossier
 - Si `SCAN_TERMINE`:
     - desactiver inputs/boutons upload
     - garder telechargement autorise
@@ -103,3 +101,5 @@ Critere d'acceptation:
 - Download fonctionne pour piece existante.
 - Clic `Scan termine` depuis la page liste verrouille les re-uploads.
 - Les enregistrements `piece_demande` sont bien persistes avec `lien_fichier` et `date_ajout`.
+
+ce n'est pas a toi de creer la page liste de demande avec le bouton scan terminé
