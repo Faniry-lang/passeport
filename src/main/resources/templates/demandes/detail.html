@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Détails demande')}"></head>
+<body>
+<div class="container mt-4">
+    <a class="btn btn-link" th:href="@{/demandes}">← Retour liste</a>
+    <h1>Détails demande #[[${demande.id}]]</h1>
+
+    <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+    <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+
+    <dl class="row">
+        <dt class="col-sm-3">Demandeur</dt>
+        <dd class="col-sm-9" th:text="${demande.demandeur.nom} + ' ' + ${demande.demandeur.prenom}"></dd>
+
+        <dt class="col-sm-3">Date</dt>
+        <dd class="col-sm-9" th:text="${demande.dateDemande}"></dd>
+
+        <dt class="col-sm-3">Statut courant</dt>
+        <dd class="col-sm-9" th:text="${statut}"></dd>
+    </dl>
+
+    <div th:if="${statut} == 'CREE'">
+        <form th:action="@{/demandes/{id}/scan-termine(id=${demande.id})}" method="post">
+            <button type="submit" class="btn btn-primary">SCAN_TERMINE</button>
+        </form>
+    </div>
+
+</div>
+</body>
+</html>
