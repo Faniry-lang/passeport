@@ -32,15 +32,23 @@ public class DemandeService {
     private final PieceObligatoireTypeVisaRepository pieceObligatoireTypeVisaRepository;
     private final ReferencePieceJustificativeRepository referencePieceJustificativeRepository;
     private final ReferenceChampTypeVisaRepository referenceChampTypeVisaRepository;
-    private final ReferenceStatutDemandeRepository referenceStatutDemandeRepository;
     private final PieceDemandeRepository pieceDemandeRepository;
     private final ChampTypeVisaDemandeRepository champTypeVisaDemandeRepository;
     private final StatutDemandeRepository statutDemandeRepository;
     private final VisaRepository visaRepository;
+    private final ReferenceStatutDemandeRepository referenceStatutDemandeRepository;
 
     @Transactional(readOnly = true)
     public Optional<PasseportRechercheDto> rechercherPasseportParNumero(String numero) {
         return passeportRepository.findByNumeroAvecDemandeur(numero).map(this::toRechercheDto);
+    }
+
+    public List<Demande> getAllDemandes() {
+        return this.demandeRepository.findAll();
+    }
+
+    public Optional<Demande> getDemandeById(Integer id) {
+        return this.demandeRepository.findById(id);
     }
 
     @Transactional
@@ -230,6 +238,33 @@ public class DemandeService {
         demande.setTypeVisa(typeVisa);
         demande.setDateDemande(LocalDate.now());
         return demandeRepository.save(demande);
+    }
+
+    @Transactional(readOnly = true)
+    public String getCurrentStatutName(Integer demandeId) {
+        return statutDemandeRepository.findFirstByDemandeIdOrderByDateStatutDesc(demandeId)
+                .map(s -> s.getReferenceStatutDemande().getNom())
+                .orElse("CREE");
+    }
+
+    @Transactional
+    public void marquerScanTermine(Integer demandeId) {
+        Demande demande = demandeRepository.findById(demandeId)
+                .orElseThrow(() -> new IllegalArgumentException("Demande introuvable."));
+
+        String courant = getCurrentStatutName(demandeId);
+        if ("SCAN_TERMINE".equalsIgnoreCase(courant)) {
+            throw new IllegalStateException("Le scan est deja termine pour cette demande.");
+        }
+
+        ReferenceStatutDemande ref = referenceStatutDemandeRepository.findByNomIgnoreCase("SCAN_TERMINE")
+                .orElseThrow(() -> new IllegalStateException("Reference statut SCAN_TERMINE introuvable."));
+
+        StatutDemande s = new StatutDemande();
+        s.setDemande(demande);
+        s.setReferenceStatutDemande(ref);
+        s.setDateStatut(java.time.Instant.now());
+        statutDemandeRepository.save(s);
     }
 
     private void insererPiecesDemande(Demande demande, Set<Integer> piecesSelectionnees) {
