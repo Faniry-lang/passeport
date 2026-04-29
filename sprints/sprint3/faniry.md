@@ -1,0 +1,3 @@
+- creer un boutton pour valider l'etat du dossier
+- creer une focntion pour changer l'etat du dossier en valider lors se que l'on appuie sur le boutton
+- verifier l'etat du dossier avant d'afficher le boutton valider et les botton de modification des informations
