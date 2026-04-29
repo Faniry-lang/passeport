@@ -4,6 +4,7 @@ import itu.passeport.dto.ChampTypeVisaDto;
 import itu.passeport.dto.DemandeForm;
 import itu.passeport.dto.PasseportRechercheDto;
 import itu.passeport.dto.PieceTypeVisaDto;
+import itu.passeport.dto.PieceUploadItemDto;
 import itu.passeport.entities.Demande;
 import itu.passeport.entities.Demandeur;
 import itu.passeport.entities.ReferenceChampTypeVisa;
@@ -30,7 +31,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 import java.util.List;
 
@@ -121,8 +126,7 @@ public class DemandeController {
                 .map(piece -> new PieceTypeVisaDto(
                         piece.getReferencePiece().getId(),
                         piece.getReferencePiece().getNom(),
-                        piece.getObligatoire()
-                ))
+                        piece.getObligatoire()))
                 .toList();
 
         return ResponseEntity.ok(pieces);
@@ -147,8 +151,7 @@ public class DemandeController {
     @PostMapping
     public String soumettreFormulaire(
             @ModelAttribute("demandeForm") DemandeForm demandeForm,
-            RedirectAttributes redirectAttributes
-    ) {
+            RedirectAttributes redirectAttributes) {
         try {
             Demande demande = demandeService.creerDemande(demandeForm);
             redirectAttributes.addFlashAttribute("successMessage", "Demande creee avec succes.");
@@ -158,8 +161,7 @@ public class DemandeController {
                 VisaExpireException
                 | PiecesObligatoiresManquantesException
                 | DonneesIncoherentesException
-                | RessourceIntrouvableException e
-        ) {
+                | RessourceIntrouvableException e) {
             return redirigerAvecErreur(redirectAttributes, demandeForm, e.getMessage());
         }
     }
@@ -167,10 +169,73 @@ public class DemandeController {
     private String redirigerAvecErreur(
             RedirectAttributes redirectAttributes,
             DemandeForm demandeForm,
-            String message
-    ) {
+            String message) {
         redirectAttributes.addFlashAttribute("errorMessage", message);
         redirectAttributes.addFlashAttribute("demandeForm", demandeForm);
         return "redirect:/demandes/nouvelle";
+    }
+
+    @GetMapping("/{id}/pieces/upload")
+    public String afficherPageUpload(@PathVariable Integer id, Model model) {
+        boolean scanTermine = demandeService.estScanTermine(id);
+        List<PieceUploadItemDto> pieces = demandeService.listerPiecesPourUpload(id);
+        model.addAttribute("demandeId", id);
+        model.addAttribute("pieces", pieces);
+        model.addAttribute("scanTermine", scanTermine);
+        return "demande/upload-pieces";
+    }
+
+    @PostMapping("/{id}/pieces/upload")
+    public String validerUpload(
+            @PathVariable Integer id,
+            @RequestParam("pieceIds") Integer[] pieceIds,
+            @RequestParam("fichiers") MultipartFile[] fichiers,
+            RedirectAttributes redirectAttributes) {
+
+        if (demandeService.estScanTermine(id)) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Le scan est terminé, impossible d'ajouter de nouveaux fichiers.");
+            return "redirect:/demandes/" + id + "/pieces/upload";
+        }
+
+        try {
+            for (int i = 0; i < pieceIds.length; i++) {
+                MultipartFile fichier = fichiers[i];
+                if (!fichier.isEmpty()) {
+                    demandeService.enregistrerPieceUpload(id, pieceIds[i], fichier);
+                }
+            }
+            redirectAttributes.addFlashAttribute("success", "Fichiers enregistrés avec succès.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Erreur lors de l'enregistrement : " + e.getMessage());
+        }
+
+        return "redirect:/demandes/" + id + "/pieces/upload";
+    }
+
+    @GetMapping("/pieces/{pieceDemandeId}/download")
+    public ResponseEntity<Resource> telechargerPiece(@PathVariable Integer pieceDemandeId) {
+        try {
+            Resource resource = demandeService.telechargerPiece(pieceDemandeId);
+            String contentType = "application/octet-stream"; // A affiner selon l'extension si nécessaire
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                    .body(resource);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+    @PostMapping("/{id}/scan-termine")
+    public String marquerScanTermine(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        try {
+            demandeService.marquerScanTermine(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Scan de la demande marqué comme terminé.");
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Erreur: " + e.getMessage());
+        }
+        return "redirect:/demandes/liste"; // As pointed out, not handled by me.
     }
 }
