@@ -5,6 +5,7 @@ import itu.passeport.constante.VisaConstante;
 import itu.passeport.dto.DemandeForm;
 import itu.passeport.dto.PasseportRechercheDto;
 import itu.passeport.entities.*;
+import itu.passeport.dto.PieceUploadItemDto;
 import itu.passeport.exceptions.DonneesIncoherentesException;
 import itu.passeport.exceptions.PiecesObligatoiresManquantesException;
 import itu.passeport.exceptions.RessourceIntrouvableException;
@@ -13,7 +14,17 @@ import itu.passeport.repositories.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.util.StringUtils;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
@@ -360,5 +371,134 @@ public class DemandeService {
 
     private boolean estDifferent(Integer valeurFormulaire, Integer valeurBase) {
         return valeurFormulaire != null && !Objects.equals(valeurFormulaire, valeurBase);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PieceUploadItemDto> listerPiecesPourUpload(Integer demandeId) {
+        Demande demande = demandeRepository.findById(demandeId)
+                .orElseThrow(() -> new RessourceIntrouvableException("Demande introuvable."));
+
+        List<PieceObligatoireTypeVisa> configurations = pieceObligatoireTypeVisaRepository
+                .findByTypeVisaId(demande.getTypeVisa().getId());
+        List<PieceDemande> piecesExistantes = pieceDemandeRepository.findByDemandeId(demandeId);
+
+        boolean scanTermine = estScanTermine(demandeId);
+
+        return configurations.stream().map(config -> {
+            ReferencePieceJustificative refPiece = config.getReferencePiece();
+            Optional<PieceDemande> pieceMatch = piecesExistantes.stream()
+                    .filter(pd -> pd.getReferencePieceJustificative().getId().equals(refPiece.getId()))
+                    .findFirst();
+
+            PieceUploadItemDto dto = new PieceUploadItemDto();
+            dto.setPieceId(refPiece.getId());
+            dto.setPieceLabel(refPiece.getNom());
+            dto.setFichierExistant(pieceMatch.isPresent() && pieceMatch.get().getLienFichier() != null);
+            dto.setUploadable(!scanTermine);
+            pieceMatch.ifPresent(pd -> dto.setPieceDemandeId(pd.getId()));
+
+            return dto;
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void enregistrerPieceUpload(Integer demandeId, Integer referencePieceId, MultipartFile fichier) {
+        if (fichier == null || fichier.isEmpty()) {
+            throw new DonneesIncoherentesException("Le fichier est vide.");
+        }
+
+        if (estScanTermine(demandeId)) {
+            throw new IllegalStateException("Le scan est termine, upload interdit.");
+        }
+
+        // valider taille (ex. 5MB)
+        if (fichier.getSize() > 5 * 1024 * 1024) {
+            throw new IllegalArgumentException("Le fichier depasse la taille maximale de 5MB.");
+        }
+
+        // valider extension (jpg, png, pdf)
+        String originalFilename = fichier.getOriginalFilename();
+        if (originalFilename == null) {
+            throw new IllegalArgumentException("Nom de fichier invalide.");
+        }
+
+        String ext = StringUtils.getFilenameExtension(originalFilename).toLowerCase();
+        if (!Arrays.asList("jpg", "jpeg", "png", "pdf").contains(ext)) {
+            throw new IllegalArgumentException(
+                    "Type de fichier non autorise. Seuls .jpg, .jpeg, .png, .pdf sont acceptes.");
+        }
+
+        // nettoyer nom
+        String nomNettoye = originalFilename.replaceAll("[^a-zA-Z0-9.-]", "_");
+        String finalName = String.format("%d_%d_%d_%s", demandeId, referencePieceId, System.currentTimeMillis(),
+                nomNettoye);
+
+        Path storageDir = Paths.get("storage/piece_justificative").toAbsolutePath().normalize();
+        try {
+            Files.createDirectories(storageDir);
+            Path targetLocation = storageDir.resolve(finalName);
+            Files.copy(fichier.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException ex) {
+            throw new RuntimeException("Impossible d'enregistrer le fichier. " + ex.getMessage(), ex);
+        }
+
+        PieceDemande pieceDemande = pieceDemandeRepository
+                .findByDemandeIdAndReferencePieceJustificativeId(demandeId, referencePieceId)
+                .orElseGet(() -> {
+                    Demande demande = demandeRepository.findById(demandeId)
+                            .orElseThrow(() -> new RessourceIntrouvableException("Demande introuvable."));
+                    ReferencePieceJustificative refPiece = referencePieceJustificativeRepository
+                            .findById(referencePieceId)
+                            .orElseThrow(() -> new RessourceIntrouvableException("Piece introuvable."));
+                    PieceDemande pd = new PieceDemande();
+                    pd.setDemande(demande);
+                    pd.setReferencePieceJustificative(refPiece);
+                    return pd;
+                });
+
+        pieceDemande.setLienFichier(finalName);
+        pieceDemande.setDateAjout(Instant.now());
+        pieceDemandeRepository.save(pieceDemande);
+    }
+
+    @Transactional(readOnly = true)
+    public Resource telechargerPiece(Integer pieceDemandeId) {
+        PieceDemande pieceDemande = pieceDemandeRepository.findById(pieceDemandeId)
+                .orElseThrow(() -> new RessourceIntrouvableException("Piece justificative introuvable."));
+
+        if (pieceDemande.getLienFichier() == null) {
+            throw new RessourceIntrouvableException("Aucun fichier associe a cette piece.");
+        }
+
+        try {
+            Path filePath = Paths.get("storage/piece_justificative").resolve(pieceDemande.getLienFichier()).normalize();
+            Resource resource = new UrlResource(filePath.toUri());
+            if (resource.exists()) {
+                return resource;
+            } else {
+                throw new RessourceIntrouvableException("Le fichier est introuvable sur le disque.");
+            }
+        } catch (MalformedURLException ex) {
+            throw new RessourceIntrouvableException("Erreur lors de la resolution du fichier.", ex);
+        }
+    }
+
+    @Transactional
+    public void marquerScanTermine(Integer demandeId) {
+        if (!demandeRepository.existsById(demandeId)) {
+            throw new RessourceIntrouvableException("Demande introuvable.");
+        }
+        initialiserStatut(demandeRepository.findById(demandeId).get(),
+                referenceStatutDemandeRepository.findByNomIgnoreCase("SCAN_TERMINE")
+                        .orElseThrow(
+                                () -> new RessourceIntrouvableException("Reference Statut SCAN_TERMINE introuvable."))
+                        .getId());
+    }
+
+    @Transactional(readOnly = true)
+    public boolean estScanTermine(Integer demandeId) {
+        return statutDemandeRepository.findFirstByDemandeIdOrderByDateStatutDesc(demandeId)
+                .map(statut -> statut.getReferenceStatutDemande().getNom().equalsIgnoreCase("SCAN_TERMINE"))
+                .orElse(false);
     }
 }
