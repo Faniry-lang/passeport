@@ -8,7 +8,8 @@ Details:
 - on doit lister tous les labels des pièces justificatives et avoir un bouton upload sur chaque piece
 - en haut on a un bouton valider qui va enregistrer les fichiers dans la base
     -table: piece_demande
-- on aura aussi un bouton scan terminé qui va changer le statut de la demande en SCAN_TERMINE
+- pas de bouton scan terminé dans la page upload
+- le changement de statut SCAN_TERMINE se fait uniquement depuis la page liste des demandes
 - si statut d'une demande est SCAN_TERMINE, on ne peut plus re-upload de fichier, mais tant que l'etat n'est pas SCAN_TERMINE, on peut toujours re-upload les fichiers des pieces justificatives
 
 Implementation detaillee:
@@ -31,7 +32,7 @@ Tables concernees:
     - lecture de la reference `SCAN_TERMINE`
 
 Classes/backend concernees:
-- `DemandeController` (nouveaux endpoints page scan + upload + scan termine)
+- `DemandeController` (nouveaux endpoints page upload + endpoint scan termine depuis la liste)
 - `DemandeService` (orchestration metier)
 - `PieceDemandeRepository`
 - `PieceObligatoireTypeVisaRepository`
@@ -75,7 +76,7 @@ Endpoints proposes:
 - `GET /demandes/pieces/{pieceDemandeId}/download`
     - download du fichier
 - `POST /demandes/{id}/scan-termine`
-    - ajoute statut `SCAN_TERMINE`
+    - ajoute statut `SCAN_TERMINE` (declenche depuis page liste des demandes, pas depuis page upload)
 
 Comportement UI:
 - Afficher la liste de toutes les pieces attendues (label + etat fichier present/absent).
@@ -83,8 +84,9 @@ Comportement UI:
     - bouton `Ajouter fichier` ou `Remplacer fichier` si scan non termine
     - bouton `Telecharger` si fichier existe
 - En haut:
-    - bouton `Valider` (sauvegarde des uploads en cours)
-    - bouton `Scan termine` (change le statut)
+    - bouton `Valider` uniquement (sauvegarde des uploads en cours)
+- Page liste des demandes:
+    - bouton `Scan termine` pour changer l'etat du dossier
 - Si `SCAN_TERMINE`:
     - desactiver inputs/boutons upload
     - garder telechargement autorise
@@ -99,5 +101,5 @@ Critere d'acceptation:
 - Les labels de pieces sont visibles pour la demande cible.
 - Upload et remplacement fonctionnent avant scan termine.
 - Download fonctionne pour piece existante.
-- Clic `Scan termine` verrouille les re-uploads.
+- Clic `Scan termine` depuis la page liste verrouille les re-uploads.
 - Les enregistrements `piece_demande` sont bien persistes avec `lien_fichier` et `date_ajout`.
