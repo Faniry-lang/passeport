@@ -6,6 +6,7 @@ import itu.passeport.dto.PasseportRechercheDto;
 import itu.passeport.dto.PieceTypeVisaDto;
 import itu.passeport.dto.PieceUploadItemDto;
 import itu.passeport.entities.Demande;
+import itu.passeport.entities.Demandeur;
 import itu.passeport.entities.ReferenceChampTypeVisa;
 import itu.passeport.entities.TypeVisa;
 import itu.passeport.exceptions.DonneesIncoherentesException;
@@ -62,6 +63,43 @@ public class DemandeController {
     @GetMapping("/confirmation")
     public String afficherConfirmation() {
         return "demandes/confirmation";
+    }
+
+    @GetMapping("")
+    public String listerDemandes(Model model) {
+        List<Demande> demandes = demandeService.getAllDemandes();
+        List<java.util.Map<String, Object>> rows = demandes.stream().map(d -> {
+            java.util.Map<String, Object> m = new java.util.HashMap<>();
+            m.put("id", d.getId());
+            Demandeur dem = d.getDemandeur();
+            m.put("demandeur", dem == null ? "-" : dem.getNom() + " " + dem.getPrenom());
+            m.put("date", d.getDateDemande());
+            m.put("statut", demandeService.getCurrentStatutName(d.getId()));
+            return m;
+        }).toList();
+        model.addAttribute("demandes", rows);
+        return "demandes/list";
+    }
+
+    @GetMapping("/{id}")
+    public String detailDemande(@PathVariable Integer id, Model model) {
+        Demande demande = demandeService.getDemandeById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Demande introuvable."));
+        String statut = demandeService.getCurrentStatutName(id);
+        model.addAttribute("demande", demande);
+        model.addAttribute("statut", statut);
+        return "demandes/detail";
+    }
+
+    @PostMapping("/{id}/scan-termine")
+    public String marquerScanTermine(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+        try {
+            demandeService.marquerScanTermine(id);
+            redirectAttributes.addFlashAttribute("successMessage", "Scan marque comme termine.");
+        } catch (IllegalStateException | IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", e.getMessage());
+        }
+        return "redirect:/demandes/" + id;
     }
 
     @GetMapping("/recherche-passeport")
