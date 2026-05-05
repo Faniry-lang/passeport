@@ -18,6 +18,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.util.StringUtils;
+import java.util.ArrayList;
+import java.util.List;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -480,5 +482,22 @@ public class DemandeService {
         return statutDemandeRepository.findFirstByDemandeIdOrderByDateStatutDesc(demandeId)
                 .map(statut -> statut.getReferenceStatutDemande().getNom().equalsIgnoreCase("SCAN_TERMINE"))
                 .orElse(false);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Demande> getDemandesByPasseport(String numero) {
+        return demandeRepository.findByPasseportNumeroOrderByDateDemandeAsc(numero);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Demande> getDemandesByDemandeId(Integer id) {
+        Demande target = demandeRepository.findById(id).orElse(null);
+        if (target == null)
+            return new java.util.ArrayList<>();
+        List<Demande> allDemandes = demandeRepository
+                .findByPasseportNumeroOrderByDateDemandeAsc(target.getPasseport().getNumero());
+        allDemandes.remove(target);
+        allDemandes.add(0, target);
+        return allDemandes;
     }
 }
