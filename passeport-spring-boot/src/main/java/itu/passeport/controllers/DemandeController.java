@@ -5,6 +5,7 @@ import itu.passeport.dto.DemandeForm;
 import itu.passeport.dto.PasseportRechercheDto;
 import itu.passeport.dto.PieceTypeVisaDto;
 import itu.passeport.dto.PieceUploadItemDto;
+import itu.passeport.constante.ReactConstants;
 import itu.passeport.entities.Demande;
 import itu.passeport.entities.Demandeur;
 import itu.passeport.entities.ReferenceChampTypeVisa;
@@ -19,6 +20,8 @@ import itu.passeport.repositories.ReferenceChampTypeVisaRepository;
 import itu.passeport.repositories.SituationFamilialeRepository;
 import itu.passeport.repositories.TypeVisaRepository;
 import itu.passeport.services.DemandeService;
+import itu.passeport.utils.QRCodeGenerator;
+import com.google.zxing.WriterException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,9 +37,12 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
 @Controller
@@ -88,7 +94,41 @@ public class DemandeController {
         String statut = demandeService.getCurrentStatutName(id);
         model.addAttribute("demande", demande);
         model.addAttribute("statut", statut);
+        model.addAttribute("reactIp", ReactConstants.IP_ADRESS);
+        model.addAttribute("reactPort", ReactConstants.PORT);
+        model.addAttribute("reactEndpoint", ReactConstants.ENDPOINT);
         return "demandes/detail";
+    }
+
+    @GetMapping("/{id}/qrcode")
+    @ResponseBody
+    public ResponseEntity<Resource> genererQrCode(@PathVariable Integer id) {
+        demandeService.getDemandeById(id)
+                .orElseThrow(() -> new RessourceIntrouvableException("Demande introuvable."));
+
+        String link = String.format("http://%s:%d%s?id=%d",
+                ReactConstants.IP_ADRESS,
+                ReactConstants.PORT,
+                ReactConstants.ENDPOINT,
+                id);
+
+        try {
+            Path qrCodePath = QRCodeGenerator.generateQRCode(
+                    link,
+                    "storage/qrcode",
+                    String.format("DMD-%d-QR-CODE.png", id));
+            Resource resource = new UrlResource(qrCodePath.toUri());
+            if (!resource.exists()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_PNG)
+                    .header(HttpHeaders.CACHE_CONTROL, "no-store, no-cache, must-revalidate, max-age=0")
+                    .body(resource);
+        } catch (IOException | WriterException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @PostMapping("/{id}/scan-termine")

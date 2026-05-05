@@ -1,0 +1,142 @@
+.tracker-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.tracker-container h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+.forms-container {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+@media (max-width: 600px) {
+  .forms-container {
+    flex-direction: column;
+  }
+}
+
+.search-form {
+  flex: 1;
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.search-form h3 {
+  margin-top: 0;
+  font-size: 16px;
+  color: #555;
+}
+
+.form-group {
+  display: flex;
+  gap: 10px;
+}
+
+.form-group input {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.form-group button {
+  padding: 10px 15px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.form-group button:hover {
+  background-color: #0056b3;
+}
+
+.form-group button:disabled {
+  background-color: #aaa;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #d9534f;
+  background: #fdf7f7;
+  padding: 10px;
+  border: 1px solid #d9534f;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.timeline-item {
+  background: white;
+  border: 1px solid #eee;
+  border-left: 5px solid #007bff;
+  padding: 15px;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  transition: transform 0.2s;
+}
+
+.timeline-item:hover {
+  transform: translateX(5px);
+}
+
+.timeline-item.highlight {
+  border-left: 5px solid #28a745;
+  background: #f4fdf6;
+}
+
+.timeline-content h4 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.timeline-content p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.status-badge {
+  display: inline-block;
+  background: #e9ecef;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.status-date {
+  margin-top: 10px;
+  color: #888;
+}
+
+.order-toggle-btn {
+  padding: 8px 12px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.order-toggle-btn:hover {
+  background-color: #5a6268;
+}
