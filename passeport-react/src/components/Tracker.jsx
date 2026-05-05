@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './Tracker.css';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8081';
 
 function Tracker() {
   const [numeroPasseport, setNumeroPasseport] = useState('');
@@ -10,15 +12,17 @@ function Tracker() {
   const [ordre, setOrdre] = useState('desc');
   const [lastSearch, setLastSearch] = useState(null);
 
-  const fetchByPasseport = async (e) => {
-    e.preventDefault();
-    if (!numeroPasseport) return;
-    
+  const fetchByPasseport = async (e, numeroParam, ordreParam) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const numero = numeroParam ?? numeroPasseport;
+    const ordreToUse = ordreParam ?? ordre;
+    if (!numero) return;
+
     setLoading(true);
     setError('');
     try {
-      setLastSearch({ type: 'passeport', value: numeroPasseport });
-      const res = await fetch(`http://localhost:8080/api/demandes/by-passeport?numero=${numeroPasseport}&ordre=${ordre}`);
+      setLastSearch({ type: 'passeport', value: numero });
+      const res = await fetch(`${API_BASE}/api/demandes/by-passeport?numero=${numero}&ordre=${ordreToUse}`);
       if (!res.ok) throw new Error('Failed to fetch data');
       const data = await res.json();
       setDemandes(data);
@@ -30,15 +34,17 @@ function Tracker() {
     }
   };
 
-  const fetchByDemandeId = async (e) => {
-    e.preventDefault();
-    if (!demandeId) return;
+  const fetchByDemandeId = async (e, idParam, ordreParam) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const id = idParam ?? demandeId;
+    const ordreToUse = ordreParam ?? ordre;
+    if (!id) return;
 
     setLoading(true);
     setError('');
     try {
-      setLastSearch({ type: 'demande', value: demandeId });
-      const res = await fetch(`http://localhost:8080/api/demandes/by-demande?id=${demandeId}&ordre=${ordre}`);
+      setLastSearch({ type: 'demande', value: id });
+      const res = await fetch(`${API_BASE}/api/demandes/by-demande?id=${id}&ordre=${ordreToUse}`);
       if (!res.ok) throw new Error('Failed to fetch data');
       const data = await res.json();
       setDemandes(data);
@@ -49,6 +55,22 @@ function Tracker() {
       setLoading(false);
     }
   };
+
+  // On mount: check query params and run a search automatically
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const idParam = params.get('id');
+    const numeroParam = params.get('numero') || params.get('numeroPasseport');
+    const ordreParam = params.get('ordre');
+    if (ordreParam) setOrdre(ordreParam);
+    if (idParam) {
+      setDemandeId(idParam);
+      fetchByDemandeId(null, idParam, ordreParam);
+    } else if (numeroParam) {
+      setNumeroPasseport(numeroParam);
+      fetchByPasseport(null, numeroParam, ordreParam);
+    }
+  }, []);
 
   const toggleOrdre = async () => {
     const newOrdre = ordre === 'desc' ? 'asc' : 'desc';
@@ -60,9 +82,9 @@ function Tracker() {
       try {
         let url = '';
         if (lastSearch.type === 'passeport') {
-          url = `http://localhost:8080/api/demandes/by-passeport?numero=${lastSearch.value}&ordre=${newOrdre}`;
+          url = `${API_BASE}/api/demandes/by-passeport?numero=${lastSearch.value}&ordre=${newOrdre}`;
         } else {
-          url = `http://localhost:8080/api/demandes/by-demande?id=${lastSearch.value}&ordre=${newOrdre}`;
+          url = `${API_BASE}/api/demandes/by-demande?id=${lastSearch.value}&ordre=${newOrdre}`;
         }
         const res = await fetch(url);
         if (!res.ok) throw new Error('Failed to fetch data');

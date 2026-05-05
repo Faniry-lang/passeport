@@ -12,7 +12,7 @@ public final class ReactConstants {
     }
 
     public static final String IP_ADRESS = "192.168.1.20";
-    public static final Integer PORT = 5173;
-    public static final String ENDPOINT = "/demandes/details";
+    public static final Integer PORT = 3001;
+    public static final String ENDPOINT = "";
 }
 

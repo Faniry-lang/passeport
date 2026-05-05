@@ -45,8 +45,6 @@
                 </div>
                 <div class="modal-body text-center">
                     <img id="qrcode-img" alt="QR code" style="max-width:100%; height:auto;" />
-                    <p class="mt-2">Lien vers la page React :</p>
-                    <a id="qrcode-link" href="#" target="_blank"></a>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
@@ -69,13 +67,9 @@
 
         btn.addEventListener('click', function() {
             const qrImage = document.getElementById('qrcode-img');
-            const linkEl = document.getElementById('qrcode-link');
             qrImage.src = qrcodeEndpoint + '?t=' + Date.now();
             qrImage.alt = 'QR code de la demande #' + demandeId;
-            linkEl.href = reactLink;
-            linkEl.textContent = reactLink;
 
-            // Guard in case Bootstrap isn't loaded
             if (!window.bootstrap) {
                 console.error('Bootstrap JS not loaded');
                 return;
