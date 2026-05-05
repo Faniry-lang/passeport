@@ -1,4 +1,4 @@
-### BRANCHE : sprint/4/qr-code/api 
+### BRANCHE : sprint/4/qr-code/api-app 
 
 - Endpoints Java
     -créer DemandeApiController
