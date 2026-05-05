@@ -20,7 +20,11 @@
         <dd class="col-sm-9" th:text="${statut}"></dd>
     </dl>
 
+
     <div th:if="${statut} == 'CREE'">
+        <div class="mb-3">
+            <a th:href="@{/demandes/{id}/pieces/upload(id=${demande.id})}" class="btn btn-success">UPLOAD FICHIER</a>
+        </div>
         <form th:action="@{/demandes/{id}/scan-termine(id=${demande.id})}" method="post">
             <button type="submit" class="btn btn-primary">SCAN_TERMINE</button>
         </form>

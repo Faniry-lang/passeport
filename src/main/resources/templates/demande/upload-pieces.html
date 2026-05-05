@@ -1,67 +1,69 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-    layout:decorate="~{fragments/layout}">
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('Scanner des pièces justificatives')}"></head>
 
-<head>
-    <title>Scanner des pièces justificatives</title>
-</head>
 
-<body>
-    <div layout:fragment="content">
-        <div class="container mt-4">
-            <h2>Scanner les pièces justificatives - Demande n°<span th:text="${demandeId}"></span></h2>
+<body style="background: #f8fafc; min-height: 100vh;">
+    <div class="container-fluid">
+        <div class="row">
+            <nav th:replace="~{fragments/layout :: sidebar}"></nav>
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 mt-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white d-flex align-items-center">
+                        <h2 class="h5 mb-0 flex-grow-1">Scanner les pièces justificatives</h2>
+                        <span class="badge bg-light text-primary ms-2">Demande n°<span th:text="${demandeId}"></span></span>
+                    </div>
+                    <div class="card-body">
+                        <div th:if="${error}" class="alert alert-danger" role="alert">
+                            <span th:text="${error}"></span>
+                        </div>
+                        <div th:if="${success}" class="alert alert-success" role="alert">
+                            <span th:text="${success}"></span>
+                        </div>
 
-            <div th:if="${error}" class="alert alert-danger" role="alert">
-                <span th:text="${error}"></span>
-            </div>
-            <div th:if="${success}" class="alert alert-success" role="alert">
-                <span th:text="${success}"></span>
-            </div>
+                        <form th:action="@{/demandes/{id}/pieces/upload(id=${demandeId})}" method="post" enctype="multipart/form-data">
+                            <button type="submit" class="btn btn-primary mb-3" th:if="${!scanTermine}">Valider</button>
 
-            <form th:action="@{/demandes/{id}/pieces/upload(id=${demandeId})}" method="post"
-                enctype="multipart/form-data">
-                <button type="submit" class="btn btn-primary mb-3" th:if="${!scanTermine}">Valider</button>
-
-                <table class="table table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Pièce</th>
-                            <th>Statut</th>
-                            <th>Action Fichier</th>
-                            <th>Télécharger</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="piece : ${pieces}">
-                            <td th:text="${piece.pieceLabel}"></td>
-                            <td>
-                                <span th:if="${piece.fichierExistant}" class="badge bg-success">Présent</span>
-                                <span th:unless="${piece.fichierExistant}"
-                                    class="badge bg-warning text-dark">Manquant</span>
-                            </td>
-                            <td>
-                                <div th:if="${piece.uploadable}">
-                                    <input type="hidden" name="pieceIds" th:value="${piece.pieceId}" />
-                                    <input type="file" name="fichiers" class="form-control"
-                                        accept=".pdf,.jpg,.jpeg,.png" />
-                                    <small th:if="${piece.fichierExistant}" class="text-muted">Si vous sélectionnez un
-                                        fichier, il remplacera l'existant. </small>
-                                </div>
-                                <div th:unless="${piece.uploadable}">
-                                    <span class="text-muted">Scan terminé, modification impossible.</span>
-                                </div>
-                            </td>
-                            <td>
-                                <a th:if="${piece.fichierExistant}"
-                                    th:href="@{/demandes/pieces/{pid}/download(pid=${piece.pieceDemandeId})}"
-                                    class="btn btn-sm btn-info">
-                                    Télécharger
-                                </a>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </form>
+                            <div class="table-responsive">
+                                <table class="table table-bordered align-middle bg-white">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Pièce</th>
+                                            <th>Statut</th>
+                                            <th>Action Fichier</th>
+                                            <th>Télécharger</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr th:each="piece : ${pieces}">
+                                            <td th:text="${piece.pieceLabel}"></td>
+                                            <td>
+                                                <span th:if="${piece.fichierExistant}" class="badge bg-success px-3 py-2">Présent</span>
+                                                <span th:unless="${piece.fichierExistant}" class="badge bg-warning text-dark px-3 py-2">Manquant</span>
+                                            </td>
+                                            <td>
+                                                <div th:if="${piece.uploadable}">
+                                                    <input type="hidden" name="pieceIds" th:value="${piece.pieceId}" />
+                                                    <input type="file" name="fichiers" class="form-control form-control-sm mb-1" accept=".pdf,.jpg,.jpeg,.png" />
+                                                    <small th:if="${piece.fichierExistant}" class="text-muted">Si vous sélectionnez un fichier, il remplacera l'existant.</small>
+                                                </div>
+                                                <div th:unless="${piece.uploadable}">
+                                                    <span class="text-muted">Scan terminé, modification impossible.</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <a th:if="${piece.fichierExistant}" th:href="@{/demandes/pieces/{pid}/download(pid=${piece.pieceDemandeId})}" class="btn btn-sm btn-outline-info">
+                                                    Télécharger
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </main>
         </div>
     </div>
 </body>

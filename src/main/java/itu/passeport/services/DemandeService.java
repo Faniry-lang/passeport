@@ -258,26 +258,6 @@ public class DemandeService {
                 .orElse("CREE");
     }
 
-    @Transactional
-    public void marquerScanTermine(Integer demandeId) {
-        Demande demande = demandeRepository.findById(demandeId)
-                .orElseThrow(() -> new IllegalArgumentException("Demande introuvable."));
-
-        String courant = getCurrentStatutName(demandeId);
-        if ("SCAN_TERMINE".equalsIgnoreCase(courant)) {
-            throw new IllegalStateException("Le scan est deja termine pour cette demande.");
-        }
-
-        ReferenceStatutDemande ref = referenceStatutDemandeRepository.findByNomIgnoreCase("SCAN_TERMINE")
-                .orElseThrow(() -> new IllegalStateException("Reference statut SCAN_TERMINE introuvable."));
-
-        StatutDemande s = new StatutDemande();
-        s.setDemande(demande);
-        s.setReferenceStatutDemande(ref);
-        s.setDateStatut(java.time.Instant.now());
-        statutDemandeRepository.save(s);
-    }
-
     private void insererPiecesDemande(Demande demande, Set<Integer> piecesSelectionnees) {
         if (piecesSelectionnees.isEmpty()) {
             return;
