@@ -54,38 +54,38 @@
             </div>
         </div>
     </div>
+ <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.getElementById('btn-qrcode');
+        if (!btn) return;
 
-    <script th:inline="javascript">
-        (function() {
-            const btn = document.getElementById('btn-qrcode');
-            if (!btn) return;
+        const demandeId = /*[[${demande.id}]]*/ 0;
+        const reactIp = /*[[${reactIp}]]*/ '192.168.1.20';
+        const reactPort = /*[[${reactPort}]]*/ 5173;
+        const reactEndpoint = /*[[${reactEndpoint}]]*/ '/demandes/details';
+        const reactLink = 'http://' + reactIp + ':' + reactPort + reactEndpoint + '?id=' + demandeId;
+        const qrcodeEndpoint = /*[[@{/demandes/{id}/qrcode(id=${demande.id})}]]*/ '';
 
-            const demandeId = /*[[${demande.id}]]*/ 0;
-            const reactIp = /*[[${reactIp}]]*/ '192.168.1.20';
-            const reactPort = /*[[${reactPort}]]*/ 5173;
-            const reactEndpoint = /*[[${reactEndpoint}]]*/ '/demandes/details';
-            const reactLink = 'http://' + reactIp + ':' + reactPort + reactEndpoint + '?id=' + demandeId;
-            const qrcodeEndpoint = /*[[@{/demandes/{id}/qrcode(id=${demande.id})}]]*/ '';
+        btn.addEventListener('click', function() {
+            const qrImage = document.getElementById('qrcode-img');
+            const linkEl = document.getElementById('qrcode-link');
+            qrImage.src = qrcodeEndpoint + '?t=' + Date.now();
+            qrImage.alt = 'QR code de la demande #' + demandeId;
+            linkEl.href = reactLink;
+            linkEl.textContent = reactLink;
 
-            btn.addEventListener('click', function() {
-                const qrImage = document.getElementById('qrcode-img');
-                const linkEl = document.getElementById('qrcode-link');
-                qrImage.src = qrcodeEndpoint + '?t=' + Date.now();
-                qrImage.alt = 'QR code de la demande #' + demandeId;
-                linkEl.href = reactLink;
-                linkEl.textContent = reactLink;
+            // Guard in case Bootstrap isn't loaded
+            if (!window.bootstrap) {
+                console.error('Bootstrap JS not loaded');
+                return;
+            }
 
-                // Show bootstrap modal
-                try {
-                    const modal = new window.bootstrap.Modal(document.getElementById('qrcodeModal'));
-                    modal.show();
-                } catch (e) {
-                    // if bootstrap not available, fallback to alert with link
-                    alert('QR disponible: ' + reactLink);
-                }
-            });
-        })();
-    </script>
+            const modal = new window.bootstrap.Modal(document.getElementById('qrcodeModal'));
+            modal.show();
+        });
+    });
+</script>
 
 </div>
 </body>
