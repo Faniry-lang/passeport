@@ -88,6 +88,11 @@ public class DemandeController {
         String statut = demandeService.getCurrentStatutName(id);
         model.addAttribute("demande", demande);
         model.addAttribute("statut", statut);
+        // TODO: Si vous souhaitez générer le QR code côté serveur et l'envoyer au template,
+        // appeler ici QRCodeGenerator.generateQRCode(...) et ajouter le chemin de l'image au model.
+        // Exemple (à implémenter si souhaité) :
+        // String qrPath = QRCodeGenerator.generateQRCode(link, "./uploads/qrcodes");
+        // model.addAttribute("qrcodePath", qrPath);
         return "demandes/detail";
     }
 
