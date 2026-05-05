@@ -1,0 +1,17 @@
+### BRANCHE : sprint/4/qr-code/api 
+
+- Endpoints Java
+    -créer DemandeApiController
+        -ajouter les endpoints suivant:
+            -"/demandes/by-passeport"
+                -recoit un parametre '?numero='
+                -retourne une liste demandes avec statuts actuel lié au numéro par ordre chronologique
+            -"/demandes/by-demande
+                -recoit un parametre '?id='
+                -retourne la même chose mais avec les détails de la demande en première position
+
+- Affichage react 
+    -dans passeport-react créer un composant comme tel:
+        - un formulaire avec input numero passeport 
+        - un formulaire avec input id demande
+        - apres submit on affiche le résultat en suivant la logique des endpoints ci dessus
