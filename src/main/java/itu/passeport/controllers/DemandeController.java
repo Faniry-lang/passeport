@@ -228,14 +228,14 @@ public class DemandeController {
         }
     }
 
-    @PostMapping("/{id}/scan-termine")
-    public String marquerScanTermine(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
-        try {
-            demandeService.marquerScanTermine(id);
-            redirectAttributes.addFlashAttribute("successMessage", "Scan de la demande marqué comme terminé.");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Erreur: " + e.getMessage());
-        }
-        return "redirect:/demandes/liste"; // As pointed out, not handled by me.
-    }
+//    @PostMapping("/{id}/scan-termine")
+//    public String marquerScanTermine(@PathVariable Integer id, RedirectAttributes redirectAttributes) {
+//        try {
+//            demandeService.marquerScanTermine(id);
+//            redirectAttributes.addFlashAttribute("successMessage", "Scan de la demande marqué comme terminé.");
+//        } catch (Exception e) {
+//            redirectAttributes.addFlashAttribute("errorMessage", "Erreur: " + e.getMessage());
+//        }
+//        return "redirect:/demandes/liste"; // As pointed out, not handled by me.
+//    }
 }
