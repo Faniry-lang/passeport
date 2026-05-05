@@ -1,3 +1,5 @@
+### BRANCHE: sprint/4/qr-code/generator
+
 - QR code
     - ajouter librairie ZXing dans pom.xml (ou une autre alternative)
     - créer classe utilitaire QRCodeGenerator
