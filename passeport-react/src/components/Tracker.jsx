@@ -7,6 +7,8 @@ function Tracker() {
   const [demandes, setDemandes] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [ordre, setOrdre] = useState('desc');
+  const [lastSearch, setLastSearch] = useState(null);
 
   const fetchByPasseport = async (e) => {
     e.preventDefault();
@@ -15,7 +17,8 @@ function Tracker() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`http://localhost:8080/api/demandes/by-passeport?numero=${numeroPasseport}`);
+      setLastSearch({ type: 'passeport', value: numeroPasseport });
+      const res = await fetch(`http://localhost:8080/api/demandes/by-passeport?numero=${numeroPasseport}&ordre=${ordre}`);
       if (!res.ok) throw new Error('Failed to fetch data');
       const data = await res.json();
       setDemandes(data);
@@ -34,7 +37,8 @@ function Tracker() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`http://localhost:8080/api/demandes/by-demande?id=${demandeId}`);
+      setLastSearch({ type: 'demande', value: demandeId });
+      const res = await fetch(`http://localhost:8080/api/demandes/by-demande?id=${demandeId}&ordre=${ordre}`);
       if (!res.ok) throw new Error('Failed to fetch data');
       const data = await res.json();
       setDemandes(data);
@@ -43,6 +47,33 @@ function Tracker() {
       setDemandes([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleOrdre = async () => {
+    const newOrdre = ordre === 'desc' ? 'asc' : 'desc';
+    setOrdre(newOrdre);
+    
+    if (lastSearch) {
+      setLoading(true);
+      setError('');
+      try {
+        let url = '';
+        if (lastSearch.type === 'passeport') {
+          url = `http://localhost:8080/api/demandes/by-passeport?numero=${lastSearch.value}&ordre=${newOrdre}`;
+        } else {
+          url = `http://localhost:8080/api/demandes/by-demande?id=${lastSearch.value}&ordre=${newOrdre}`;
+        }
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Failed to fetch data');
+        const data = await res.json();
+        setDemandes(data);
+      } catch (err) {
+        setError(err.message);
+        setDemandes([]);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -85,7 +116,12 @@ function Tracker() {
       <div className="results-container">
         {demandes.length > 0 ? (
           <div>
-            <h3>Historique des demandes</h3>
+            <div className="results-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3>Historique des demandes</h3>
+              <button onClick={toggleOrdre} className="order-toggle-btn">
+                Trier: {ordre === 'desc' ? 'Plus récentes en premier' : 'Plus anciennes en premier'}
+              </button>
+            </div>
             <div className="timeline">
               {demandes.map((demande, index) => (
                 <div key={demande.id || index} className={`timeline-item ${index === 0 ? 'highlight' : ''}`}>
