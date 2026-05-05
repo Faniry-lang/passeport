@@ -32,7 +32,7 @@
 
     <!-- QR code button + modal -->
     <div class="mt-3">
-        <button id="btn-qrcode" class="btn btn-secondary" data-id="[[${demande.id}]]">Obtenir QR code</button>
+        <button type="button" id="btn-qrcode" class="btn btn-secondary">Obtenir QR code</button>
     </div>
 
     <!-- Modal -->
@@ -55,35 +55,33 @@
         </div>
     </div>
 
-    <script>
+    <script th:inline="javascript">
         (function() {
             const btn = document.getElementById('btn-qrcode');
             if (!btn) return;
+
+            const demandeId = /*[[${demande.id}]]*/ 0;
+            const reactIp = /*[[${reactIp}]]*/ '192.168.1.20';
+            const reactPort = /*[[${reactPort}]]*/ 5173;
+            const reactEndpoint = /*[[${reactEndpoint}]]*/ '/demandes/details';
+            const reactLink = 'http://' + reactIp + ':' + reactPort + reactEndpoint + '?id=' + demandeId;
+            const qrcodeEndpoint = /*[[@{/demandes/{id}/qrcode(id=${demande.id})}]]*/ '';
+
             btn.addEventListener('click', function() {
-                const id = btn.dataset.id || '';
-                const ip = '192.168.1.20'; // TODO: utiliser ReactConstants côté serveur si besoin
-                const port = 5173;
-                const endpoint = '/demandes/details';
-                const link = 'http://' + ip + ':' + port + endpoint + '?id=' + encodeURIComponent(id);
-
-                // Utilise l'API Google Chart pour générer une image QR côté client.
-                // Remarque: le sprint demandait l'ajout de ZXing côté back-end. L'intégration serveur
-                // (ex: endpoint /demandes/{id}/qrcode qui appelerait QRCodeGenerator) n'est pas implémentée
-                // ici pour rester strictement sur les tâches demandées. Voir TODO dans le controller.
-                const qrSrc = 'https://chart.googleapis.com/chart?cht=qr&chs=300x300&chl=' + encodeURIComponent(link);
-
-                document.getElementById('qrcode-img').src = qrSrc;
+                const qrImage = document.getElementById('qrcode-img');
                 const linkEl = document.getElementById('qrcode-link');
-                linkEl.href = link;
-                linkEl.textContent = link;
+                qrImage.src = qrcodeEndpoint + '?t=' + Date.now();
+                qrImage.alt = 'QR code de la demande #' + demandeId;
+                linkEl.href = reactLink;
+                linkEl.textContent = reactLink;
 
                 // Show bootstrap modal
                 try {
-                    const modal = new bootstrap.Modal(document.getElementById('qrcodeModal'));
+                    const modal = new window.bootstrap.Modal(document.getElementById('qrcodeModal'));
                     modal.show();
                 } catch (e) {
                     // if bootstrap not available, fallback to alert with link
-                    alert('QR disponible: ' + link);
+                    alert('QR disponible: ' + reactLink);
                 }
             });
         })();
