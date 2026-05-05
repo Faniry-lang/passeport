@@ -1,32 +1,37 @@
 <!DOCTYPE html>
 <html lang="fr" xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments/layout :: head('Liste des demandes')}"></head>
-<body>
-<div class="container mt-4">
-    <h1>Liste des demandes</h1>
-    <div th:if="${demandes}">
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <th>Id</th>
-                <th>Demandeur</th>
-                <th>Date</th>
-                <th>Statut</th>
-                <th>Actions</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr th:each="row : ${demandes}">
-                <td th:text="${row.id}"></td>
-                <td th:text="${row.demandeur}"></td>
-                <td th:text="${row.date}"></td>
-                <td th:text="${row.statut}"></td>
-                <td>
-                    <a th:href="@{/demandes/{id}(id=${row.id})}" class="btn btn-sm btn-outline-primary">Voir détails</a>
-                </td>
-            </tr>
-            </tbody>
-        </table>
+<body style="background: #f8fafc; min-height: 100vh;">
+<div class="container-fluid">
+    <div class="row">
+        <nav th:replace="~{fragments/layout :: sidebar}"></nav>
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 mt-4">
+            <h1>Liste des demandes</h1>
+            <div th:if="${demandes}">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Demandeur</th>
+                        <th>Date</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="row : ${demandes}">
+                        <td th:text="${row.id}"></td>
+                        <td th:text="${row.demandeur}"></td>
+                        <td th:text="${row.date}"></td>
+                        <td th:text="${row.statut}"></td>
+                        <td>
+                            <a th:href="@{/demandes/{id}(id=${row.id})}" class="btn btn-sm btn-outline-primary">Voir détails</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
     </div>
 </div>
 </body>
