@@ -27,14 +27,18 @@ public class DemandeApiController {
     private final StatutDemandeRepository statutDemandeRepository;
 
     @GetMapping("/by-passeport")
-    public ResponseEntity<List<Map<String, Object>>> getDemandesByPasseport(@RequestParam("numero") String numero) {
-        List<Demande> demandes = demandeService.getDemandesByPasseport(numero);
+    public ResponseEntity<List<Map<String, Object>>> getDemandesByPasseport(
+            @RequestParam("numero") String numero,
+            @RequestParam(value = "ordre", defaultValue = "desc") String ordre) {
+        List<Demande> demandes = demandeService.getDemandesByPasseport(numero, ordre);
         return ResponseEntity.ok(demandes.stream().map(this::mapToDto).collect(Collectors.toList()));
     }
 
     @GetMapping("/by-demande")
-    public ResponseEntity<List<Map<String, Object>>> getDemandesByDemande(@RequestParam("id") Integer id) {
-        List<Demande> demandes = demandeService.getDemandesByDemandeId(id);
+    public ResponseEntity<List<Map<String, Object>>> getDemandesByDemande(
+            @RequestParam("id") Integer id,
+            @RequestParam(value = "ordre", defaultValue = "desc") String ordre) {
+        List<Demande> demandes = demandeService.getDemandesByDemandeId(id, ordre);
         return ResponseEntity.ok(demandes.stream().map(this::mapToDto).collect(Collectors.toList()));
     }
 

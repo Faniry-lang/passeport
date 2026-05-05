@@ -7,4 +7,6 @@ import java.util.List;
 
 public interface DemandeRepository extends JpaRepository<Demande, Integer> {
     List<Demande> findByPasseportNumeroOrderByDateDemandeAsc(String numero);
+    List<Demande> findByPasseportNumeroOrderByIdAsc(String numero);
+    List<Demande> findByPasseportNumeroOrderByIdDesc(String numero);
 }

@@ -485,17 +485,26 @@ public class DemandeService {
     }
 
     @Transactional(readOnly = true)
-    public List<Demande> getDemandesByPasseport(String numero) {
-        return demandeRepository.findByPasseportNumeroOrderByDateDemandeAsc(numero);
+    public List<Demande> getDemandesByPasseport(String numero, String ordre) {
+        if ("asc".equalsIgnoreCase(ordre)) {
+            return demandeRepository.findByPasseportNumeroOrderByIdAsc(numero);
+        }
+        return demandeRepository.findByPasseportNumeroOrderByIdDesc(numero);
     }
 
     @Transactional(readOnly = true)
-    public List<Demande> getDemandesByDemandeId(Integer id) {
+    public List<Demande> getDemandesByDemandeId(Integer id, String ordre) {
         Demande target = demandeRepository.findById(id).orElse(null);
         if (target == null)
             return new java.util.ArrayList<>();
-        List<Demande> allDemandes = demandeRepository
-                .findByPasseportNumeroOrderByDateDemandeAsc(target.getPasseport().getNumero());
+            
+        List<Demande> allDemandes;
+        if ("asc".equalsIgnoreCase(ordre)) {
+            allDemandes = demandeRepository.findByPasseportNumeroOrderByIdAsc(target.getPasseport().getNumero());
+        } else {
+            allDemandes = demandeRepository.findByPasseportNumeroOrderByIdDesc(target.getPasseport().getNumero());
+        }
+        
         allDemandes.remove(target);
         allDemandes.add(0, target);
         return allDemandes;
