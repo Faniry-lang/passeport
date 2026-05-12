@@ -45,4 +45,8 @@ public class DemandeForm {
     private Set<Integer> pieceIds = new HashSet<>();
     // HTML: name="champsDynamiques[<referenceChampTypeVisaId>]"
     private Map<Integer, String> champsDynamiques = new HashMap<>();
+
+    // captures Base64 (remplies par le frontend)
+    private String photoBase64;
+    private String signatureBase64;
 }

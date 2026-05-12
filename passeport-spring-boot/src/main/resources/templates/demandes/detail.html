@@ -30,6 +30,34 @@
         </form>
     </div>
 
+    <!-- Affichage des pièces capturées -->
+    <div class="mt-4">
+        <h4>Pièces capturées</h4>
+        <div th:if="${pieces != null and #lists.isEmpty(pieces)}">
+            <p class="text-muted">Aucune pièce capturée pour cette demande.</p>
+        </div>
+        <div class="row" th:if="${pieces != null}">
+            <div class="col-md-3 mb-3" th:each="piece : ${pieces}">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <div th:if="${piece.lienFichier != null}">
+                            <a th:href="@{/demandes/pieces/{id}/preview(id=${piece.id})}" target="_blank">
+                                <img th:src="@{/demandes/pieces/{id}/preview(id=${piece.id})}"
+                                     alt="Preview" style="max-width:100%; max-height:150px; object-fit:contain;"/>
+                            </a>
+                            <p class="small mt-2" th:text="${piece.referencePieceJustificative.nom}"></p>
+                            <a th:href="@{/demandes/pieces/{id}/download(id=${piece.id})}" class="btn btn-sm btn-outline-secondary">Télécharger</a>
+                        </div>
+                        <div th:if="${piece.lienFichier == null}">
+                            <p class="text-muted small">Aucun fichier</p>
+                            <p class="small mt-2" th:text="${piece.referencePieceJustificative.nom}"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- QR code button + modal -->
     <div class="mt-3">
         <button type="button" id="btn-qrcode" class="btn btn-secondary">Obtenir QR code</button>
