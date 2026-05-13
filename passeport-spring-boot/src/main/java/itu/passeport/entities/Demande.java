@@ -35,5 +35,9 @@ public class Demande {
     @Column(name = "date_demande", nullable = false)
     private LocalDate dateDemande;
 
+    @Column(name = "photo_path")
+    private String photoPath;
 
+    @Column(name = "signature_path")
+    private String signaturePath;
 }
