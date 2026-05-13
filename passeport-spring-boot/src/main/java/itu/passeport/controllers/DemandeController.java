@@ -43,6 +43,7 @@ import org.springframework.http.MediaType;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 
 @Controller
@@ -97,6 +98,8 @@ public class DemandeController {
         model.addAttribute("reactIp", ReactConstants.IP_ADRESS);
         model.addAttribute("reactPort", ReactConstants.PORT);
         model.addAttribute("reactEndpoint", ReactConstants.ENDPOINT);
+        // Ajout : pièces associées (photo/signature ou autres pièces attachées)
+        model.addAttribute("pieces", demandeService.getPiecesByDemandeId(id));
         return "demandes/detail";
     }
 
@@ -262,6 +265,30 @@ public class DemandeController {
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(contentType))
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resource.getFilename() + "\"")
+                    .body(resource);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+    }
+
+    @GetMapping("/pieces/{pieceDemandeId}/preview")
+    @ResponseBody
+    public ResponseEntity<Resource> previewPiece(@PathVariable Integer pieceDemandeId) {
+        try {
+            Resource resource = demandeService.telechargerPiece(pieceDemandeId);
+            String filename = resource.getFilename() == null ? "file" : resource.getFilename();
+            String ext = "";
+            int idx = filename.lastIndexOf('.');
+            if (idx >= 0) ext = filename.substring(idx + 1).toLowerCase();
+
+            MediaType mediaType = MediaType.APPLICATION_OCTET_STREAM;
+            if (Arrays.asList("png", "gif").contains(ext)) mediaType = MediaType.IMAGE_PNG;
+            else if (Arrays.asList("jpg", "jpeg").contains(ext)) mediaType = MediaType.IMAGE_JPEG;
+            else if ("pdf".equals(ext)) mediaType = MediaType.APPLICATION_PDF;
+
+            return ResponseEntity.ok()
+                    .contentType(mediaType)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + filename + "\"")
                     .body(resource);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();

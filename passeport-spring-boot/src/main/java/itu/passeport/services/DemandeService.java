@@ -66,12 +66,18 @@ public class DemandeService {
 
     @Transactional
     public Demande creerDemande(DemandeForm form) {
-        return creerDemandeAvecStatut(form, StatusConstante.DEMANDE_CREE);
+        // création standard
+        Demande demande = creerDemandeAvecStatut(form, StatusConstante.DEMANDE_CREE);
+        // si des captures photo/signature ont été fournies, les enregistrer
+        handleBase64CapturesIfAny(demande, form);
+        return demande;
     }
 
     @Transactional
     public Demande creerDemandeApprouvee(DemandeForm form) {
-        return creerDemandeAvecStatut(form, StatusConstante.DEMANDE_APPROUVE);
+        Demande demande = creerDemandeAvecStatut(form, StatusConstante.DEMANDE_APPROUVE);
+        handleBase64CapturesIfAny(demande, form);
+        return demande;
     }
 
     private Demande creerDemandeAvecStatut(DemandeForm form, int statutInitialId) {
@@ -324,6 +330,71 @@ public class DemandeService {
         statutDemandeRepository.save(statutDemande);
     }
 
+    // Gère l'enregistrement des captures (photoBase64 / signatureBase64) si présentes dans le formulaire
+    private void handleBase64CapturesIfAny(Demande demande, DemandeForm form) {
+        if (demande == null || form == null) return;
+        try {
+            if (form.getPhotoBase64() != null && !form.getPhotoBase64().isBlank()) {
+                saveBase64Piece(demande.getId(), form.getPhotoBase64(), "Photo capturée");
+            }
+            if (form.getSignatureBase64() != null && !form.getSignatureBase64().isBlank()) {
+                saveBase64Piece(demande.getId(), form.getSignatureBase64(), "Signature capturée");
+            }
+        } catch (Exception e) {
+            // Ne pas empêcher la création de la demande si l'enregistrement des captures échoue,
+            // mais logguer et éventuellement remonter l'erreur selon la stratégie désirée.
+            throw new RuntimeException("Erreur lors de l'enregistrement des captures: " + e.getMessage(), e);
+        }
+    }
+
+    private void saveBase64Piece(Integer demandeId, String base64DataUrl, String label) {
+        if (base64DataUrl == null || base64DataUrl.isBlank()) return;
+        String[] parts = base64DataUrl.split(",", 2);
+        if (parts.length != 2) return;
+        String meta = parts[0];
+        String base64 = parts[1];
+
+        String ext = "png";
+        if (meta.contains("jpeg") || meta.contains("jpg")) ext = "jpg";
+
+        byte[] bytes = java.util.Base64.getDecoder().decode(base64);
+        String filename = String.format("%d_capture_%d.%s", demandeId, System.currentTimeMillis(), ext);
+
+        Path storageDir = Paths.get("storage/piece_justificative").toAbsolutePath().normalize();
+        try {
+            Files.createDirectories(storageDir);
+            Path target = storageDir.resolve(filename);
+            Files.write(target, bytes);
+
+            // chercher ou créer la référence
+            ReferencePieceJustificative ref = referencePieceJustificativeRepository.findAll().stream()
+                    .filter(r -> r.getNom().equalsIgnoreCase(label))
+                    .findFirst()
+                    .orElseGet(() -> {
+                        ReferencePieceJustificative rp = new ReferencePieceJustificative();
+                        rp.setNom(label);
+                        return referencePieceJustificativeRepository.save(rp);
+                    });
+
+            PieceDemande pd = pieceDemandeRepository.findByDemandeIdAndReferencePieceJustificativeId(demandeId, ref.getId())
+                    .orElseGet(() -> {
+                        Demande d = demandeRepository.findById(demandeId)
+                                .orElseThrow(() -> new RessourceIntrouvableException("Demande introuvable."));
+                        PieceDemande newPd = new PieceDemande();
+                        newPd.setDemande(d);
+                        newPd.setReferencePieceJustificative(ref);
+                        return newPd;
+                    });
+
+            pd.setLienFichier(filename);
+            pd.setDateAjout(Instant.now());
+            pieceDemandeRepository.save(pd);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Impossible d'enregistrer la capture: " + e.getMessage(), e);
+        }
+    }
+
     @SuppressWarnings("unused")
     private void creerVisa(
             Demande demande,
@@ -404,7 +475,12 @@ public class DemandeService {
             throw new IllegalArgumentException("Nom de fichier invalide.");
         }
 
-        String ext = StringUtils.getFilenameExtension(originalFilename).toLowerCase();
+        String extension = StringUtils.getFilenameExtension(originalFilename);
+        if (extension == null) {
+            throw new IllegalArgumentException("Type de fichier invalide pour les medias.");
+        }
+
+        String ext = extension.toLowerCase(Locale.ROOT);
         if (!Arrays.asList("jpg", "jpeg", "png", "pdf").contains(ext)) {
             throw new IllegalArgumentException(
                     "Type de fichier non autorise. Seuls .jpg, .jpeg, .png, .pdf sont acceptes.");
@@ -526,7 +602,10 @@ public class DemandeService {
         Path storageDir = Paths.get("storage/medias").toAbsolutePath().normalize();
         try {
             Files.createDirectories(storageDir);
-            Path targetLocation = storageDir.resolve(finalName);
+            Path targetLocation = storageDir.resolve(finalName).normalize();
+            if (!targetLocation.startsWith(storageDir)) {
+                throw new IllegalArgumentException("Nom de fichier invalide.");
+            }
             Files.copy(fichier.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
             return finalName;
         } catch (IOException ex) {
@@ -567,6 +646,8 @@ public class DemandeService {
         return allDemandes;
     }
 
-    // TODO: Si la génération de la carte résident est implémentée côté serveur (Thymeleaf/PDF), 
-    // joindre dynamiquement l'image de la signature et la photo du demandeur au fichier exporté.
+    @Transactional(readOnly = true)
+    public List<PieceDemande> getPiecesByDemandeId(Integer demandeId) {
+        return pieceDemandeRepository.findByDemandeId(demandeId);
+    }
 }
