@@ -538,14 +538,71 @@ public class DemandeService {
 
     @Transactional
     public void marquerScanTermine(Integer demandeId) {
-        if (!demandeRepository.existsById(demandeId)) {
-            throw new RessourceIntrouvableException("Demande introuvable.");
+        Demande demande = demandeRepository.findById(demandeId)
+                .orElseThrow(() -> new RessourceIntrouvableException("Demande introuvable."));
+
+        if (demande.getPhotoPath() == null || demande.getSignaturePath() == null) {
+            throw new DonneesIncoherentesException("La photo ou la signature est manquante, impossible de passer à SCAN_TERMINE.");
         }
-        initialiserStatut(demandeRepository.findById(demandeId).get(),
+
+        initialiserStatut(demande,
                 referenceStatutDemandeRepository.findByNomIgnoreCase("SCAN_TERMINE")
                         .orElseThrow(
                                 () -> new RessourceIntrouvableException("Reference Statut SCAN_TERMINE introuvable."))
                         .getId());
+    }
+
+    @Transactional
+    public void enregistrerMedias(Integer demandeId, MultipartFile photo, MultipartFile signature) {
+        Demande demande = demandeRepository.findById(demandeId)
+                .orElseThrow(() -> new RessourceIntrouvableException("Demande introuvable."));
+
+        if (photo == null || photo.isEmpty() || signature == null || signature.isEmpty()) {
+            throw new DonneesIncoherentesException("La photo et la signature sont obligatoires.");
+        }
+
+        String photoPath = sauvegarderFichierMedia(demandeId, photo, "photo");
+        String signaturePath = sauvegarderFichierMedia(demandeId, signature, "signature");
+
+        demande.setPhotoPath(photoPath);
+        demande.setSignaturePath(signaturePath);
+        demandeRepository.save(demande);
+
+        initialiserStatut(demande,
+                referenceStatutDemandeRepository.findByNomIgnoreCase("PHOTO_TERMINEE")
+                        .orElseThrow(
+                                () -> new RessourceIntrouvableException("Reference Statut PHOTO_TERMINEE introuvable."))
+                        .getId());
+    }
+
+    private String sauvegarderFichierMedia(Integer demandeId, MultipartFile fichier, String type) {
+        if (fichier.getSize() > 5 * 1024 * 1024) {
+            throw new IllegalArgumentException("Le fichier depasse la taille maximale de 5MB.");
+        }
+
+        String originalFilename = fichier.getOriginalFilename();
+        if (originalFilename == null) {
+            throw new IllegalArgumentException("Nom de fichier invalide.");
+        }
+
+        String ext = StringUtils.getFilenameExtension(originalFilename).toLowerCase();
+        if (!Arrays.asList("jpg", "jpeg", "png").contains(ext)) {
+            throw new IllegalArgumentException(
+                    "Type de fichier non autorise pour les medias. Seuls .jpg, .jpeg, .png sont acceptes.");
+        }
+
+        String nomNettoye = originalFilename.replaceAll("[^a-zA-Z0-9.-]", "_");
+        String finalName = String.format("demande_%d_%s_%d_%s", demandeId, type, System.currentTimeMillis(), nomNettoye);
+
+        Path storageDir = Paths.get("storage/medias").toAbsolutePath().normalize();
+        try {
+            Files.createDirectories(storageDir);
+            Path targetLocation = storageDir.resolve(finalName);
+            Files.copy(fichier.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+            return finalName;
+        } catch (IOException ex) {
+            throw new RuntimeException("Impossible d'enregistrer le fichier media. " + ex.getMessage(), ex);
+        }
     }
 
     @Transactional(readOnly = true)

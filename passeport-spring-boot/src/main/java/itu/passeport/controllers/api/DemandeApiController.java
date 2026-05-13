@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -40,6 +42,21 @@ public class DemandeApiController {
             @RequestParam(value = "ordre", defaultValue = "desc") String ordre) {
         List<Demande> demandes = demandeService.getDemandesByDemandeId(id, ordre);
         return ResponseEntity.ok(demandes.stream().map(this::mapToDto).collect(Collectors.toList()));
+    }
+
+    @PostMapping("/{id}/medias")
+    public ResponseEntity<?> enregistrerMedias(
+            @org.springframework.web.bind.annotation.PathVariable("id") Integer id,
+            @RequestParam("photo") MultipartFile photo,
+            @RequestParam("signature") MultipartFile signature) {
+        try {
+            demandeService.enregistrerMedias(id, photo, signature);
+            return ResponseEntity.ok().body(Map.of("message", "Médias enregistrés avec succès."));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", e.getMessage()));
+        }
     }
 
     private Map<String, Object> mapToDto(Demande demande) {
