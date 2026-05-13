@@ -475,7 +475,12 @@ public class DemandeService {
             throw new IllegalArgumentException("Nom de fichier invalide.");
         }
 
-        String ext = StringUtils.getFilenameExtension(originalFilename).toLowerCase();
+        String extension = StringUtils.getFilenameExtension(originalFilename);
+        if (extension == null) {
+            throw new IllegalArgumentException("Type de fichier invalide pour les medias.");
+        }
+
+        String ext = extension.toLowerCase(Locale.ROOT);
         if (!Arrays.asList("jpg", "jpeg", "png", "pdf").contains(ext)) {
             throw new IllegalArgumentException(
                     "Type de fichier non autorise. Seuls .jpg, .jpeg, .png, .pdf sont acceptes.");
@@ -597,7 +602,10 @@ public class DemandeService {
         Path storageDir = Paths.get("storage/medias").toAbsolutePath().normalize();
         try {
             Files.createDirectories(storageDir);
-            Path targetLocation = storageDir.resolve(finalName);
+            Path targetLocation = storageDir.resolve(finalName).normalize();
+            if (!targetLocation.startsWith(storageDir)) {
+                throw new IllegalArgumentException("Nom de fichier invalide.");
+            }
             Files.copy(fichier.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
             return finalName;
         } catch (IOException ex) {
